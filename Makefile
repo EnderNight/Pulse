@@ -13,9 +13,14 @@ LDFLAGS =
 LDLIBS =
 
 
+# Project directory structure
+SRCDIR = src
+BUILDDIR = obj
+
+
 # Input files
-SRC = pulse.cpp
-OBJ = $(SRC:.cpp=.o)
+SRC = $(patsubst $(SRCDIR)/%, %, $(wildcard $(SRCDIR)/*.cpp))
+OBJ = $(patsubst %, $(BUILDDIR)/%, $(SRC:.cpp=.o))
 
 
 # Executable name
@@ -27,9 +32,10 @@ pulse: $(OBJ)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $(EXE) $^
 
 
-$(OBJ): $(SRC)
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+	@mkdir obj
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -c -o $@ $^
 
 .PHONY: clean
 clean:
-	$(RM) -rf $(OBJ) $(EXE)
+	$(RM) -rf $(BUILDDIR) $(EXE)

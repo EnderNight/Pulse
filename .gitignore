@@ -30,5 +30,8 @@
 *.exe
 *.out
 *.app
+
+# Pulse related
 pulse
 compile_commands.json
+obj/
