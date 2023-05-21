@@ -126,14 +126,16 @@ def executor(rpnTokens: list[Token]) -> int:
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
-        assert False, ("Incorrect number of arguments, you must only provide "
-                       "a single path to an .pul file")
+    input = sys.argv[1:]
 
-    input = open(sys.argv[1], 'r')
+    if len(input) != 0:
+        if len(input) == 1:
+            input = splitInput(input[0])
 
-    infTokens = lexer(splitInput(input.read()))
+        infTokens = lexer(input)
 
-    rpnTokens = parser(infTokens)
+        rpnTokens = parser(infTokens)
 
-    print(executor(rpnTokens))
+        res = executor(rpnTokens)
+
+        print(res)
