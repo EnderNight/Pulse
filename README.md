@@ -42,8 +42,8 @@ Only integers are supported. If you try to use something else, the interpreter w
 
 ## Arithmetic
 
-Plus ('+'): [a: int] '+' [b: int] -> [c: int] adds two numbers
-Minus ('-'): [a: int] '-' [b: int] -> [c: int] substracts two numbers
+- Plus ('+'): [a: int] '+' [b: int] -> [c: int] adds two numbers
+- Minus ('-'): [a: int] '-' [b: int] -> [c: int] substracts two numbers
 
 # How to write in Pulse?
 
