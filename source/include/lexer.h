@@ -1,6 +1,6 @@
 #pragma once
 
-#include "token.h"
+#include "types.h"
 
 #include <stddef.h>
 

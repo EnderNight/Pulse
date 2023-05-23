@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "types.h"
 #include "interpreter.h"
 #include "lexer.h"
 #include "parser.h"

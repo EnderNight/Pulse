@@ -1,5 +1,5 @@
 #pragma once
 
-#include "ast.h"
+#include "types.h"
 
 int inter(AST *ast);

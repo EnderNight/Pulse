@@ -1,5 +1,5 @@
 #include "interpreter.h"
-#include "token.h"
+#include "types.h"
 
 
 int plus(int x, int y) { return x + y; }

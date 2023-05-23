@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ast.h"
-#include "token.h"
+#include "types.h"
 
 #include <stddef.h>
 
