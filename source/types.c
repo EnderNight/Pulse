@@ -1,8 +1,8 @@
 #include "types.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 /*
  * Support only for TT_INT tokens
@@ -93,6 +93,10 @@ void print_token(Token *token) {
         printf("DIV");
         break;
 
+    case TT_MOD:
+        printf("MOD");
+        break;
+
     default:
         printf("Unreachable");
         break;
@@ -158,7 +162,19 @@ AST *create_bin_op_node(Token *token, AST *left, AST *right) {
     return ast;
 }
 
-void _print_ast(AST *ast, bool is_root) {
+AST *create_un_op_node(Token *token, AST *operand) {
+
+    AST *ast = create_ast();
+
+    ast->type = UN_OP_NODE;
+    ast->node.un_op_node = malloc(sizeof(UnOpNode));
+    ast->node.un_op_node->operand = operand;
+    ast->node.un_op_node->token = copy_token(token);
+
+    return ast;
+}
+
+void _print_ast(AST *ast) {
 
     printf("(");
 
@@ -166,16 +182,17 @@ void _print_ast(AST *ast, bool is_root) {
     if (ast->type == NUM_NODE) {
         print_token(ast->node.num_node->token);
     } else if (ast->type == BIN_OP_NODE) {
-        _print_ast(ast->node.bin_op_node->left, false);
+        _print_ast(ast->node.bin_op_node->left);
         printf(" ");
-        if (is_root)
-            printf("\e[0;31m");
         print_token(ast->node.bin_op_node->token);
-        if (is_root)
-            printf("\e[0m");
         printf(" ");
-        _print_ast(ast->node.bin_op_node->right, false);
-    } else {
+        _print_ast(ast->node.bin_op_node->right);
+    } else if (ast->type == UN_OP_NODE) {
+        print_token(ast->node.un_op_node->token);
+        printf(" ");
+        _print_ast(ast->node.un_op_node->operand);
+    }
+    else {
         printf("unreachable");
     }
 
@@ -184,7 +201,7 @@ void _print_ast(AST *ast, bool is_root) {
 }
 
 void print_ast(AST *ast) {
-    _print_ast(ast, true);
+    _print_ast(ast);
     printf("\n");
 }
 
@@ -201,12 +218,21 @@ void free_binopnode(BinOpNode *node) {
     free(node);
 }
 
+void free_un_op_node(UnOpNode *node) {
+    free_token(node->token);
+
+    free_ast(node->operand);
+    free(node);
+}
+
 void free_ast(AST *ast) {
 
     if (ast->type == NUM_NODE) {
         free_numnode(ast->node.num_node);
     } else if (ast->type == BIN_OP_NODE) {
         free_binopnode(ast->node.bin_op_node);
+    } else if (ast->type == UN_OP_NODE) {
+        free_un_op_node(ast->node.un_op_node);
     }
 
     free(ast);

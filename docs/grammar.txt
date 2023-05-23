@@ -1,5 +1,7 @@
-expression : factor ((PLUS|MINUS) factor)*
+expr 	: factor ((PLUS|MINUS) factor)*
 
-factor 	   : literal ((MUL|DIV|MOD) literal)*
+factor 	: literal ((MUL|DIV|MOD) literal)*
 
-literal    : INT|FLOAT
+literal : INT
+	: (PLUS|MINUS) literal
+	: LPAREN expr RPAREN

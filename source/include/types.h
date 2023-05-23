@@ -6,10 +6,12 @@
 typedef enum {
     TT_INT,
 
+    // Operators
     TT_PLUS,
     TT_MINUS,
     TT_MULT,
-    TT_DIV
+    TT_DIV,
+    TT_MOD
 } TokenType;
 
 typedef union {
@@ -40,15 +42,17 @@ void free_tokens(Tokens *tokens);
 
 typedef struct NumNode NumNode;
 typedef struct BinOpNode BinOpNode;
+typedef struct UnOpNode UnOpNode;
 
 typedef union {
 
     NumNode *num_node;
     BinOpNode *bin_op_node;
+    UnOpNode *un_op_node;
 
 } Node;
 
-typedef enum { NUM_NODE, BIN_OP_NODE } NodeType;
+typedef enum { NUM_NODE, BIN_OP_NODE, UN_OP_NODE } NodeType;
 
 typedef struct {
     Node node;
@@ -66,10 +70,17 @@ typedef struct BinOpNode {
     AST *right;
 } BinOpNode;
 
+typedef struct UnOpNode {
+    Token *token;
+    AST *operand;
+} UnOpNode;
+
 AST *create_ast(void);
 AST *create_num_node(Token *token);
 AST *create_bin_op_node(Token *token, AST *left, AST *right);
+AST *create_un_op_node(Token *token, AST *operand);
 void print_ast(AST *ast);
 void free_num_node(NumNode *node);
 void free_bin_op_node(BinOpNode *node);
+void free_un_op_node(UnOpNode *node);
 void free_ast(AST *ast);

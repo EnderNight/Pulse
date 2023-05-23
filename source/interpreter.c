@@ -6,6 +6,7 @@ int plus(int x, int y) { return x + y; }
 int minus(int x, int y) { return x - y; }
 int mult(int x, int y) { return x * y; }
 int div(int x, int y) { return x / y; }
+int mod(int x, int y) { return x % y; }
 
 
 int inter(AST *ast) {
@@ -31,9 +32,21 @@ int inter(AST *ast) {
         case TT_DIV:
             res = div(left_res, right_res);
             break;
+        case TT_MOD:
+            res = mod(left_res, right_res);
+            break;
         default:
             break;
         }
+
+        return res;
+    }
+
+    if (ast->type == UN_OP_NODE) {
+        int res = inter(ast->node.un_op_node->operand);
+
+        if (ast->node.un_op_node->token->type == TT_MINUS)
+            res *= -1;
 
         return res;
     }

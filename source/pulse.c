@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
         Parser *parser;
         AST *ast;
         int res;
-        char *source = argv[1];
+        char *source;
         bool is_file = false;
 
         if ((source = realpath(argv[1], NULL)) != NULL && source) {
@@ -38,6 +38,9 @@ int main(int argc, char **argv) {
 
             fclose(src);
         }
+
+        if (!is_file)
+            source = argv[1];
 
         lexer = create_lexer(source);
         tokens = lex(lexer);

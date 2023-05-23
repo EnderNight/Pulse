@@ -1,5 +1,5 @@
-#include "types.h"
 #include "parser.h"
+#include "types.h"
 
 #include <stdlib.h>
 
@@ -31,6 +31,18 @@ void next_token(Parser *parser) {
 
 AST *p_literal(Parser *parser) {
 
+    if (parser->cur_token->type == TT_PLUS ||
+        parser->cur_token->type == TT_MINUS) {
+
+        Token *tmp = parser->cur_token;
+        next_token(parser);
+        AST *num_node = p_literal(parser);
+        
+        AST *un_op_node = create_un_op_node(tmp, num_node);
+
+        return un_op_node;
+    }
+
     AST *num_node = create_num_node(parser->cur_token);
     next_token(parser);
 
@@ -43,7 +55,8 @@ AST *p_factor(Parser *parser) {
     Token *tmp;
 
     while (parser->cur_token != NULL && (parser->cur_token->type == TT_MULT ||
-                                         parser->cur_token->type == TT_DIV)) {
+                                         parser->cur_token->type == TT_DIV ||
+                                         parser->cur_token->type == TT_MOD)) {
 
         tmp = parser->cur_token;
         next_token(parser);

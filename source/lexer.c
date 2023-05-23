@@ -77,6 +77,9 @@ Tokens *lex(Lexer *lexer) {
         case '/':
             add_token(tokens, TT_DIV, 0);
             break;
+        case '%':
+            add_token(tokens, TT_MOD, 0);
+            break;
         default:
             if (isdigit(*lexer->cur_char)) {
                 value = lex_digit(lexer);
