@@ -10,7 +10,7 @@ INCDIR = $(SRCDIR)/include
 # Compiler flags
 CC = gcc
 CPPFLAGS = -I$(INCDIR) -MMD
-CFLAGS = -Wall -Wextra -std=c2x -pedantic -ggdb
+CFLAGS = -Wall -Wextra -std=gnu18 -ggdb
 LDFLAGS = -fsanitize=address
 LIBS =
 

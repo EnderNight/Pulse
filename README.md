@@ -2,7 +2,7 @@
 
 A small, mutlipurpose programming language.
 
-For now, only capable of doing simple addition and substractions.
+For now, only capable of doing simple addition, substractions, multiplications and divisions.
 
 The main goal of the Pulse syntax is readability and not having a lot of reserved words.
 
@@ -14,8 +14,8 @@ The main goal of the Pulse syntax is readability and not having a lot of reserve
 - [ ] Implement operators:
     - [x] addition (+, binary)
     - [x] substraction (-, binary)
-    - [ ] multiplication (*, binary)
-    - [ ] division (/, binary)
+    - [x] multiplication (*, binary)
+    - [x] division (/, binary)
     - [ ] power (^, binary)
     - [ ] modulo (%, binary)
 - [ ] Implement types:
@@ -32,9 +32,9 @@ The main goal of the Pulse syntax is readability and not having a lot of reserve
 # Installation
 
 1. Clone this repo
-2. Once in the root directory, type ```make``` or ```make install```.
+2. Once in the root directory, type ```make```.
 
-This will install both *pulse* and *pulcli* in your local PATH.
+This will install *pulse* in your local PATH.
 
 # Usage
 
@@ -50,14 +50,10 @@ pulse <path_of_your_program>
 ```
 2. Use the cli
 
-For now, it may be better for you to use the cli instead of the interpreter.
-
-To use the cli, type:
 ```command
-pulcli <your_program>
+pulse <your_program>
 ```
-where <your_program> can either be wrapped in quotes or just written as plain text:
-```pulcli "34 + 35"``` is equivalent to ```pulcli 34 + 35```.
+where <your_program> is a string containing some Pulse code: ```pulse "34+35"```.
 
 # Language Reference
 
@@ -71,7 +67,9 @@ Only integers are supported. If you try to use something else, the interpreter w
 
 - Plus ('+'): [a: int] '+' [b: int] -> [c: int] adds two numbers
 - Minus ('-'): [a: int] '-' [b: int] -> [c: int] substracts two numbers
+- Multiply ('*'): [a: int] '*' [b: int] -> [c: int] mutlipliestwo numbers
+- Divide ('/'): [a: int] '/' [b: int] -> [c: int] dividestwo numbers
 
 # How to write in Pulse?
 
-For now, the interpreter will only understand literals and operators when they aren't next to each other (this "34+35" will fail but this "34 + 35" is ok).
+For now, you can write in Pulse like you write on a calculator.
