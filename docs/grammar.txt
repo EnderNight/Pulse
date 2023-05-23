@@ -1,0 +1,5 @@
+expression : factor ((PLUS|MINUS) factor)*
+
+factor 	   : literal ((MUL|DIV|MOD) literal)*
+
+literal    : INT|FLOAT
