@@ -17,7 +17,7 @@ The main goal of the Pulse syntax is readability and not having a lot of reserve
     - [x] multiplication (*, binary)
     - [x] division (/, binary)
     - [ ] power (^, binary)
-    - [ ] modulo (%, binary)
+    - [x] modulo (%, binary)
 - [ ] Implement types:
     - [ ] Integers
     - [ ] Floats
@@ -67,8 +67,9 @@ Only integers are supported. If you try to use something else, the interpreter w
 
 - Plus ('+'): [a: int] '+' [b: int] -> [c: int] adds two numbers
 - Minus ('-'): [a: int] '-' [b: int] -> [c: int] substracts two numbers
-- Multiply ('*'): [a: int] '*' [b: int] -> [c: int] mutlipliestwo numbers
-- Divide ('/'): [a: int] '/' [b: int] -> [c: int] dividestwo numbers
+- Multiply ('\*'): [a: int] '\*' [b: int] -> [c: int] mutliplies two numbers
+- Divide ('/'): [a: int] '/' [b: int] -> [c: int] divides two numbers
+- Modulo ('%'): [a: int] '%' [b: int] -> [c: int] applies modulo on two numbers
 
 # How to write in Pulse?
 
