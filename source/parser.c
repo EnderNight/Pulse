@@ -4,6 +4,11 @@
 #include <stdlib.h>
 
 
+AST *p_literal(Parser *parser);
+AST *p_factor(Parser *parser);
+AST *p_expr(Parser *parser);
+
+
 Parser *create_parser(Tokens *tokens) {
 
     Parser *parser = malloc(sizeof(Parser));
@@ -37,11 +42,23 @@ AST *p_literal(Parser *parser) {
         Token *tmp = parser->cur_token;
         next_token(parser);
         AST *num_node = p_literal(parser);
-        
+
         AST *un_op_node = create_un_op_node(tmp, num_node);
 
         return un_op_node;
     }
+
+    if (parser->cur_token->type == TT_LPAREN) {
+
+        next_token(parser);
+        AST *node = p_expr(parser);
+
+        if (parser->cur_token->type == TT_RPAREN)
+            next_token(parser);
+
+        return node;
+    }
+
 
     AST *num_node = create_num_node(parser->cur_token);
     next_token(parser);

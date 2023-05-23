@@ -97,6 +97,14 @@ void print_token(Token *token) {
         printf("MOD");
         break;
 
+    case TT_LPAREN:
+        printf("LPAREN");
+        break;
+
+    case TT_RPAREN:
+        printf("RPAREN");
+        break;
+
     default:
         printf("Unreachable");
         break;
@@ -191,8 +199,7 @@ void _print_ast(AST *ast) {
         print_token(ast->node.un_op_node->token);
         printf(" ");
         _print_ast(ast->node.un_op_node->operand);
-    }
-    else {
+    } else {
         printf("unreachable");
     }
 

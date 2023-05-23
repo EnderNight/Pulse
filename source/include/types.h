@@ -11,7 +11,11 @@ typedef enum {
     TT_MINUS,
     TT_MULT,
     TT_DIV,
-    TT_MOD
+    TT_MOD,
+
+    // Priority
+    TT_LPAREN,
+    TT_RPAREN
 } TokenType;
 
 typedef union {
