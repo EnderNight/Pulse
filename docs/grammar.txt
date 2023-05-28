@@ -1,7 +1,0 @@
-expr 	: factor ((PLUS|MINUS) factor)*
-
-factor 	: literal ((MUL|DIV|MOD) literal)*
-
-literal : INT
-	: (PLUS|MINUS) literal
-	: LPAREN expr RPAREN
