@@ -55,40 +55,53 @@ int lex_digit(Lexer *lexer) {
     return num;
 }
 
+char *lex_identifier(Lexer *lexer) {
+
+    char *res;
+
+}
+
+
 
 Tokens *lex(Lexer *lexer) {
 
     Tokens *tokens = create_tokens();
-    int value;
+    Value value;
 
     while (lexer->cur_char != NULL) {
 
         switch (*lexer->cur_char) {
 
         case '+':
-            add_token(tokens, TT_PLUS, 0);
+            add_token(tokens, TT_PLUS, value);
             break;
         case '-':
-            add_token(tokens, TT_MINUS, 0);
+            add_token(tokens, TT_MINUS, value);
             break;
         case '*':
-            add_token(tokens, TT_MULT, 0);
+            add_token(tokens, TT_MULT, value);
             break;
         case '/':
-            add_token(tokens, TT_DIV, 0);
+            add_token(tokens, TT_DIV, value);
             break;
         case '%':
-            add_token(tokens, TT_MOD, 0);
+            add_token(tokens, TT_MOD, value);
+            break;
+        case '^':
+            add_token(tokens, TT_POW, value);
             break;
         case '(':
-            add_token(tokens, TT_LPAREN, 0);
+            add_token(tokens, TT_LPAREN, value);
             break;
         case ')':
-            add_token(tokens, TT_RPAREN, 0);
+            add_token(tokens, TT_RPAREN, value);
+            break;
+        case '=':
+            add_token(tokens, TT_EQ, value);
             break;
         default:
             if (isdigit(*lexer->cur_char)) {
-                value = lex_digit(lexer);
+                value.val_int = lex_digit(lexer);
                 add_token(tokens, TT_INT, value);
             } else if (!isspace(*lexer->cur_char) &&
                        !iscntrl(*lexer->cur_char)) {
