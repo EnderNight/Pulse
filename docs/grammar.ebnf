@@ -23,23 +23,25 @@ statement =
 
 assign_stmt = IDENTIFIER "=" expression ";" ;
 
-if_stmt = "if" expr "{" statement { statement } "}" [ else_stmt ] ;
+if_stmt = "if" "(" expr ")" "{" statement { statement } "}" [ else_stmt ] ;
 
 else_stmt = "else" "{" statement { statement } "}" ;
 
-return_stmt = "return" expression ";"
+return_stmt = "return" expression ";" ;
 
-while_stmt = "while" "(" expression ")" "{" statement { statement } "}"
+while_stmt = "while" "(" expression ")" "{" statement { statement } "}" ;
 
-expression =
-| IDENTIFIER
+atom_expr =
+  IDENTIFIER
 | INTEGER_LITERAL
 | STRING_LITERAL
-| expression "+" expression
-| expression "-" expression
-| expression "*" expression
-| expression "/" expression
 | "(" expression ")"
+;
+
+factor_expr = atom_expr { ("*" | "/") factor_expr } ;
+
+expression =
+  factor_expr { ("+" | "-") expression }
 | IDENTIFIER "(" [ expression { "," expression } ] ")"
 ;
 
