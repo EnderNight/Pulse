@@ -26,32 +26,6 @@ type token =
     | INT_LITERAL of int
     | STR_LITERAL of string
 
-let string_of_token = function
-    | LET -> "LET"
-    | COLON -> "COLON"
-    | SEMICOLON -> "SEMICOLON"
-    | LPAREN -> "LPAREN"
-    | RPAREN -> "RPAREN"
-    | LBRACK -> "LBRACK"
-    | RBRACK -> "RBRACK"
-    | COMA -> "COMA"
-    | EQUAL -> "EQUAL"
-    | IF -> "IF"
-    | ELSE -> "ELSE"
-    | RETURN -> "RETURN"
-    | WHILE -> "WHILE"
-    | PLUS -> "PLUS"
-    | MINUS -> "MINUS"
-    | MULT -> "MULT"
-    | DIV -> "DIV"
-    | LT -> "LT"
-    | GT -> "GT"
-    | EOF -> "EOF"
-    | IDENTIFIER id -> "IDENTIFIER(" ^ id ^ ")"
-    | INT_LITERAL i -> "INT_LITERAL(" ^ string_of_int i ^ ")"
-    | STR_LITERAL s -> "STR_LITERAL(" ^ s ^ ")"
-;;
-
 let get_digit c =
     match c with
     | '0'..'9' -> Some (int_of_char c - int_of_char '0')

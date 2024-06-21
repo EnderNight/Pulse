@@ -25,3 +25,7 @@ type fun_dec = {
 }
 
 type ast = fun_dec list
+
+let parse tokens =
+    print_endline "Parsing..."
+;;
