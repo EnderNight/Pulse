@@ -1,0 +1,9 @@
+let add(a: int, b: int): int {
+    return a + b;
+}
+
+let main(): int {
+    let result: int = a + b;
+
+    return result;
+}

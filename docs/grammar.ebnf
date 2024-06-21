@@ -1,0 +1,49 @@
+program = { declaration } ;
+
+declaration = 
+  var_dec 
+| fun_dec
+;
+
+var_dec = "let" IDENTIFIER ":" IDENTIFIER "=" expression";" ;
+
+fun_dec = "let" IDENTIFIER "(" params ")" ":" IDENTIFIER "{" { statement } "}"
+
+params = [ parameter { "," parameter } ] ;
+
+parameter = IDENTIFIER ":" IDENTIFIER ;
+
+statement = 
+  var_dec
+| assign_stmt
+| if_stmt
+| return_stmt
+| while_stmt
+;
+
+assign_stmt = IDENTIFIER "=" expression ";" ;
+
+if_stmt = "if" expr "{" statement { statement } "}" [ else_stmt ] ;
+
+else_stmt = "else" "{" statement { statement } "}" ;
+
+return_stmt = "return" expression ";"
+
+while_stmt = "while" "(" expression ")" "{" statement { statement } "}"
+
+expression =
+| IDENTIFIER
+| INTEGER_LITERAL
+| STRING_LITERAL
+| expression "+" expression
+| expression "-" expression
+| expression "*" expression
+| expression "/" expression
+| "(" expression ")"
+| IDENTIFIER "(" [ expression { "," expression } ] ")"
+;
+
+IDENTIFIER = [a-zA-Z]+
+
+INTEGER_LITERAL = [0-9]+
+STRING_LITERAL = """ { IDENTIFIER } """
