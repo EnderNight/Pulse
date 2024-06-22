@@ -1,5 +1,15 @@
 type token =
+  (* Constants *)
+  | IDENTIFIER of string
+  | INT_LITERAL of int
+  | STR_LITERAL of string
+  (* Reserved words *)
   | LET
+  | IF
+  | ELSE
+  | RETURN
+  | WHILE
+  (* Structure *)
   | COLON
   | SEMICOLON
   | LPAREN
@@ -7,11 +17,6 @@ type token =
   | LBRACK
   | RBRACK
   | COMA
-  | EQUAL
-  | IF
-  | ELSE
-  | RETURN
-  | WHILE
   (* Operators *)
   | PLUS
   | MINUS
@@ -21,58 +26,100 @@ type token =
   | GT
   | LE
   | GE
+  | ASSIGN
+  | EQUAL
+  | DIFF
+  (* Misc *)
   | EOF
-  | IDENTIFIER of string
-  | INT_LITERAL of int
-  | STR_LITERAL of string
+[@@deriving show]
 
-let get_digit c =
+let string_of_token = function
+  (* Constants *)
+  | IDENTIFIER id -> id
+  | INT_LITERAL i -> string_of_int i
+  | STR_LITERAL s -> "\"" ^ s ^ "\""
+  (* Reserved words *)
+  | LET -> "let"
+  | IF -> "if"
+  | ELSE -> "else"
+  | RETURN -> "return"
+  | WHILE -> "while"
+  (* Structure *)
+  | COLON -> ":"
+  | SEMICOLON -> ";"
+  | LPAREN -> "("
+  | RPAREN -> ")"
+  | LBRACK -> "{"
+  | RBRACK -> "}"
+  | COMA -> ","
+  (* Operators *)
+  | PLUS -> "+"
+  | MINUS -> "-"
+  | MULT -> "*"
+  | DIV -> "/"
+  | LT -> "<"
+  | GT -> ">"
+  | LE -> "<="
+  | GE -> ">="
+  | ASSIGN -> "="
+  | EQUAL -> "=="
+  | DIFF -> "!="
+  (* Misc *)
+  | EOF -> "EOF"
+
+let rec get_digit c =
   match c with
   | '0' .. '9' -> Some (int_of_char c - int_of_char '0')
   | _ -> None
 
-let lex_string input pos length =
-  let rec next_string pos =
+and lex_string input pos length =
+  let rec get_string pos =
     if pos >= length then ("", pos)
     else
       match input.[pos] with
       | '"' -> ("", pos + 1)
       | c ->
-          let sub, pos = next_string (pos + 1) in
+          let sub, pos = get_string (pos + 1) in
           (String.make 1 c ^ sub, pos)
   in
-  next_string pos
+  get_string pos
 
-let lex_int input pos length =
-  let rec next_int pos num =
+and lex_int input pos length =
+  let rec get_int pos num =
     if pos >= length then (0, pos)
     else
       match get_digit input.[pos] with
-      | Some digit -> next_int (pos + 1) ((num * 10) + digit)
+      | Some digit -> get_int (pos + 1) ((num * 10) + digit)
       | None -> (num, pos)
   in
-  next_int pos 0
+  get_int pos 0
 
-let lex_identifier input pos length =
-  let rec next_id pos =
+and lex_identifier input pos length =
+  let rec get_id pos =
     if pos >= length then ("", pos)
     else
       match input.[pos] with
       | 'a' .. 'z' | 'A' .. 'Z' ->
-          let sub, new_pos = next_id (pos + 1) in
+          let sub, new_pos = get_id (pos + 1) in
           (String.make 1 input.[pos] ^ sub, new_pos)
       | _ -> ("", pos)
   in
-  next_id pos
+  get_id pos
 
-let lex input =
+and is_expected input pos expected =
+  let length = String.length input and len = String.length expected in
+  if pos + len >= length then false
+  else String.sub input pos len = expected
+
+and lex input =
   let length = String.length input in
   let rec next_token pos =
     if pos >= length then [ EOF ]
     else
       match input.[pos] with
       | ' ' | '\t' | '\n' -> next_token (pos + 1)
-      | 'l' when String.sub input pos 3 = "let" -> LET :: next_token (pos + 3)
+      | 'l' when is_expected input pos "let" ->
+          LET :: next_token (pos + 3)
       | ':' -> COLON :: next_token (pos + 1)
       | ';' -> SEMICOLON :: next_token (pos + 1)
       | '(' -> LPAREN :: next_token (pos + 1)
@@ -80,27 +127,30 @@ let lex input =
       | '{' -> LBRACK :: next_token (pos + 1)
       | '}' -> RBRACK :: next_token (pos + 1)
       | ',' -> COMA :: next_token (pos + 1)
-      | '=' -> EQUAL :: next_token (pos + 1)
-      | 'i' when String.sub input pos 2 = "if" -> IF :: next_token (pos + 2)
-      | 'e' when String.sub input pos 4 = "else" -> ELSE :: next_token (pos + 4)
-      | 'r' when String.sub input pos 6 = "return" ->
+      | '=' ->
+          if is_expected input pos "==" then
+            EQUAL :: next_token (pos + 2)
+          else ASSIGN :: next_token (pos + 1)
+      | '!' when is_expected input pos "!=" ->
+          DIFF :: next_token (pos + 2)
+      | 'i' when is_expected input pos "if" ->
+          IF :: next_token (pos + 2)
+      | 'e' when is_expected input pos "else" ->
+          ELSE :: next_token (pos + 4)
+      | 'r' when is_expected input pos "return" ->
           RETURN :: next_token (pos + 6)
-      | 'w' when String.sub input pos 5 = "while" ->
+      | 'w' when is_expected input pos "while" ->
           WHILE :: next_token (pos + 5)
       | '+' -> PLUS :: next_token (pos + 1)
       | '-' -> MINUS :: next_token (pos + 1)
       | '*' -> MULT :: next_token (pos + 1)
       | '/' -> DIV :: next_token (pos + 1)
       | '<' ->
-          let tok =
-            if pos < length - 1 && input.[pos + 1] = '=' then LE else LT
-          in
-          tok :: next_token (pos + 1)
+          if is_expected input pos "<=" then LE :: next_token (pos + 2)
+          else LT :: next_token (pos + 1)
       | '>' ->
-          let tok =
-            if pos < length - 1 && input.[pos + 1] = '=' then GE else GT
-          in
-          tok :: next_token (pos + 1)
+          if is_expected input pos ">=" then GE :: next_token (pos + 2)
+          else GT :: next_token (pos + 1)
       | '0' .. '9' ->
           let num, pos = lex_int input pos length in
           INT_LITERAL num :: next_token pos
@@ -110,6 +160,6 @@ let lex input =
       | 'a' .. 'z' | 'A' .. 'Z' ->
           let id, pos = lex_identifier input pos length in
           IDENTIFIER id :: next_token pos
-      | _ -> failwith "unexpected char"
+      | c -> failwith ("unexpected char " ^ String.make 1 c)
   in
   next_token 0

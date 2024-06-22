@@ -11,7 +11,7 @@ let main(): void {
     }
 
     if (x == 69) { 
-        print("Nive\n");
+        print("Nice\n");
     }
     
     else {

@@ -1,5 +1,15 @@
 type token =
+  (* Constants *)
+  | IDENTIFIER of string
+  | INT_LITERAL of int
+  | STR_LITERAL of string
+  (* Reserved words *)
   | LET
+  | IF
+  | ELSE
+  | RETURN
+  | WHILE
+  (* Structure *)
   | COLON
   | SEMICOLON
   | LPAREN
@@ -7,11 +17,6 @@ type token =
   | LBRACK
   | RBRACK
   | COMA
-  | EQUAL
-  | IF
-  | ELSE
-  | RETURN
-  | WHILE
   (* Operators *)
   | PLUS
   | MINUS
@@ -21,9 +26,12 @@ type token =
   | GT
   | LE
   | GE
+  | ASSIGN (* = *)
+  | EQUAL (* == *)
+  | DIFF (* != *)
+  (* Misc *)
   | EOF
-  | IDENTIFIER of string
-  | INT_LITERAL of int
-  | STR_LITERAL of string
+[@@deriving show]
 
+val string_of_token : token -> string
 val lex : string -> token list

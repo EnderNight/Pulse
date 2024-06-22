@@ -7,7 +7,7 @@ declaration =
 
 var_dec = "let" IDENTIFIER ":" IDENTIFIER "=" expression";" ;
 
-fun_dec = "let" IDENTIFIER "(" params ")" ":" IDENTIFIER "{" { statement } "}"
+fun_dec = "let" IDENTIFIER "(" params ")" ":" IDENTIFIER compound_statment ;
 
 params = [ parameter { "," parameter } ] ;
 
@@ -15,35 +15,67 @@ parameter = IDENTIFIER ":" IDENTIFIER ;
 
 statement = 
   var_dec
-| assign_stmt
 | if_stmt
 | return_stmt
 | while_stmt
+| expr_stmt
 ;
 
-assign_stmt = IDENTIFIER "=" expression ";" ;
+if_stmt = "if" "(" expr ")" compound_statment [ else_stmt ] ;
 
-if_stmt = "if" "(" expr ")" "{" statement { statement } "}" [ else_stmt ] ;
-
-else_stmt = "else" "{" statement { statement } "}" ;
+else_stmt = "else" compound_statment ;
 
 return_stmt = "return" expression ";" ;
 
-while_stmt = "while" "(" expression ")" "{" statement { statement } "}" ;
+while_stmt = "while" "(" expression ")" compound_statment ;
 
-atom_expr =
+expr_stmt = expression ";" ;
+
+
+compound_statment =
+  "{" statement { statement } "}" ;
+
+
+args_expr_list =
+  assign_expr { "," assign_expr }
+;
+
+
+primary_exp =
   IDENTIFIER
 | INTEGER_LITERAL
 | STRING_LITERAL
 | "(" expression ")"
 ;
 
-factor_expr = atom_expr { ("*" | "/") factor_expr } ;
-
-expression =
-  factor_expr { ("+" | "-") expression }
-| IDENTIFIER "(" [ expression { "," expression } ] ")"
+postfix_expr =
+  primary_exp [ "(" args_expr_list ")" ]
 ;
+
+multiplicative_expr =
+   postfix_expr { ("*" | "/") multiplicative_expr }
+;
+
+additive_expr = 
+    multiplicative_expr { ("+" | "-") additive_expr }
+;
+
+relational_expr =
+    additive_expr { ("<" | "<=" | ">" | ">=") relational_expr }
+;
+
+equality_expr =
+   relational_expr { ("==" | "!=") equality_expr }
+ ;
+
+assign_expr = 
+  equality_expr
+| primary_exp "=" assign_expr
+;
+
+
+expression = assign_expr ;
+
 
 IDENTIFIER = [a-zA-Z]+
 

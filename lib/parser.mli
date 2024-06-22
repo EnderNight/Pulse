@@ -1,4 +1,16 @@
-type operator = Plus | Minus | Mult | Div | Lt | Le | Gt | Ge
+type operator =
+  | Plus
+  | Minus
+  | Mult
+  | Div
+  | Lt
+  | Le
+  | Gt
+  | Ge
+  | Eq
+  | Assign
+  | Diff
+[@@deriving show]
 
 type expr =
   | Int of int
@@ -6,6 +18,7 @@ type expr =
   | Var of string
   | Call of string * expr list
   | BinOp of operator * expr * expr
+[@@deriving show]
 
 type stmt =
   | Let of string * string * expr
@@ -13,8 +26,10 @@ type stmt =
   | While of expr * stmt list
   | Assign of string * expr
   | Return of expr
+  | Expr of expr
+[@@deriving show]
 
-type param = { name : string; type_id : string }
+type param = { name : string; type_id : string } [@@deriving show]
 
 type fun_dec = {
   name : string;
@@ -22,7 +37,8 @@ type fun_dec = {
   return_type : string;
   body : stmt list;
 }
+[@@deriving show]
 
-type ast = fun_dec list
+type ast = fun_dec list [@@deriving show]
 
 val parse : Tokenizer.token list -> ast
