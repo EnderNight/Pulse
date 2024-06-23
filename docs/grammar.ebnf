@@ -1,0 +1,54 @@
+program = declaration { declaration } ;
+
+declaration = var_dec | fun_dec ;
+
+var_dec = "let" ID ":" ID "=" expression ";" ;
+
+fun_dec = "fun" ID "(" args ")" ":" ID "{" statements "}" ;
+
+primary_expr =
+| ID
+| INT_CONST
+| STR_LIT
+| "(" expression ")"
+;
+
+postfix_expr = primary_expr [ "(" [ expr ] ")" ] ;
+
+mult_expr = postfix_expr { ("*" | "/") mult_expr } ;
+
+add_expr = mult_expr { ("+" | "-") add_expr } ;
+
+rela_expr = add_expr { ("<" | "<=" | ">" | ">=") rela_expr } ;
+
+equ_expr = rela_expr { ("==" | "!=") equ_expr } ;
+
+assign_expr = [ ID "=" ] equ_expr ;
+
+expression = assign_expr ;
+
+expr_stmt = expression ";"
+
+if_stmt = "if" "(" expression ")" "{" statement { statement } "}" [ "else" "{" statement { statement } "}" ]
+
+while_stmt = "while" "(" expression ")" "{" statement { statement } "}"
+
+return_stmt = "return" expression ";"
+
+statement =
+| var_dec
+| if_stmt
+| while_stmt
+| return_stmt
+| expr_stmt
+;
+
+args = arg { "," arg } ;
+
+arg = ID ":" ID ;
+
+statements = statement { statement } ;
+
+ID = [a-zA-Z_][a-zA-Z0-9_]*
+INT_CONST = [0-9]+
+STR_LIT = """.*"""
