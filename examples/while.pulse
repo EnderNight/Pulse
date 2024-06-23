@@ -1,4 +1,4 @@
-let main(): void {
+fun main(): void {
 
     let i: int = 0;
 
