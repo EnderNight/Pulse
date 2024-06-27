@@ -19,7 +19,7 @@ let () =
     let lexer = Lexer.make input Sys.argv.(1) in
     let parser = Parser.make lexer in
     match Parser.parse parser with
-    | Ok ast -> Parsetree.show ast |> print_endline
+    | Ok ast -> Parsetree.code ast |> print_endline
     | Error error ->
         Error.show_error error |> print_endline;
         exit 1

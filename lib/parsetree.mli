@@ -11,7 +11,6 @@ type bin_op =
   | Eq
   | Neq
   | Assign
-[@@deriving show]
 
 and expr =
   | Int of int
@@ -19,7 +18,6 @@ and expr =
   | BinOp of bin_op * expr * expr
   | Var of string
   | Call of string * expr list
-[@@deriving show]
 
 and stmt =
   | Let of var_dec
@@ -27,10 +25,8 @@ and stmt =
   | While of expr * stmt list
   | Return of expr option
   | Expr of expr
-[@@deriving show]
 
 and var_dec = { name : string; type_id : string; value : expr option }
-[@@deriving show]
 
 and fun_dec = {
   name : string;
@@ -38,7 +34,8 @@ and fun_dec = {
   type_id : string;
   body : stmt list;
 }
-[@@deriving show]
 
-and decl = VarDec of var_dec | FunDec of fun_dec [@@deriving show]
+and decl = VarDec of var_dec | FunDec of fun_dec
 and t = decl list [@@deriving show]
+
+val code : t -> string
