@@ -6,7 +6,7 @@ A simple programming language
 
 ### Before implementing type-checking
 
-- [ ] Separate code (types, functions, etc...) in different files
+- [x] Separate code (types, functions, etc...) in different files
 - [ ] Printing for the ast (pp_show, graphviz and code)
 - [ ] Tests for the parser
 - [ ] Better error handling: better location, better reports
