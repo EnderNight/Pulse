@@ -1,47 +1,8 @@
 open Error
-
-type token_kind =
-  (* Keywords *)
-  | LET
-  | FUN
-  | RETURN
-  | IF
-  | ELSE
-  | WHILE
-  (* Identifier *)
-  | ID of string
-  (* Constants *)
-  | INT_CONST of int
-  (* String literal *)
-  | STR_LIT of string
-  (* Ponctuator *)
-  | LPAREN
-  | RPAREN
-  | COLON
-  | LBRACK
-  | RBRACK
-  | SEMICOLON
-  | COMMA
-  (* Operators *)
-  | PLUS
-  | MINUS
-  | MULT
-  | DIV
-  | ASSIGN (* = *)
-  | EQUAL (* == *)
-  | NEQUAL (* != *)
-  | LT (* < *)
-  | LE (* <= *)
-  | GT (* > *)
-  | GE (* >= *)
-  (* End of file *)
-  | EOF
-
-(* Token *)
-type token = { kind : token_kind; loc : location }
+open Token
 
 (* Lexer *)
-type lexer = {
+type t = {
   input : string;
   input_len : int;
   input_name : string;
@@ -56,37 +17,6 @@ let rec int_from_char c =
   | '0' .. '9' -> int_of_char c - int_of_char '0'
   | _ -> failwith "int_from_char: c is not a digit"
 
-and show_token_value token =
-  match token.kind with
-  | LET -> "let"
-  | FUN -> "fun"
-  | RETURN -> "return"
-  | IF -> "if"
-  | ELSE -> "else"
-  | WHILE -> "while"
-  | ID id -> id
-  | INT_CONST i -> string_of_int i
-  | STR_LIT s -> s
-  | LPAREN -> "("
-  | RPAREN -> ")"
-  | COLON -> ":"
-  | LBRACK -> "{"
-  | RBRACK -> "}"
-  | SEMICOLON -> ";"
-  | COMMA -> ","
-  | PLUS -> "+"
-  | MINUS -> "-"
-  | MULT -> "*"
-  | DIV -> "/"
-  | ASSIGN -> "="
-  | EQUAL -> "=="
-  | NEQUAL -> "!="
-  | LT -> "<"
-  | LE -> "<="
-  | GT -> ">"
-  | GE -> ">="
-  | EOF -> "eof"
-
 and is_digit = function '0' .. '9' -> true | _ -> false
 and is_whitespace = function ' ' | '\n' | '\t' -> true | _ -> false
 
@@ -97,13 +27,6 @@ and is_id_start = function
 and is_id = function
   | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> true
   | _ -> false
-
-and make_loc lexer =
-  {
-    input_name = lexer.input_name;
-    line = lexer.line;
-    col = lexer.col;
-  }
 
 and make input name =
   let len = String.length input in
@@ -116,13 +39,6 @@ and make input name =
     line = 1;
     col = 1;
   }
-
-and get_token_kind token = token.kind
-
-and get_kind_list tokens =
-  match tokens with
-  | [] -> []
-  | token :: tokens -> token.kind :: get_kind_list tokens
 
 and advance lexer =
   if lexer.cursor < lexer.input_len - 1 then
@@ -212,7 +128,7 @@ and lex_id lexer loc =
   | _ -> Error { loc; msg = "expecting an identifier" }
 
 and lex lexer =
-  let loc = make_loc lexer in
+  let loc = Location.make lexer.input_name lexer.line lexer.col in
   match lexer.cur_char with
   (* End of file *)
   | None -> Ok ({ kind = EOF; loc }, lexer)

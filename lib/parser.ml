@@ -1,56 +1,16 @@
 open Lexer
 open Error
-
-(* AST *)
-type bin_op =
-  | Plus
-  | Minus
-  | Mult
-  | Div
-  | Lt
-  | Le
-  | Gt
-  | Ge
-  | Eq
-  | Neq
-  | Assign
-[@@deriving show]
-
-and expr =
-  | Int of int
-  | Str of string
-  | BinOp of bin_op * expr * expr
-  | Var of string
-  | Call of string * expr list
-[@@deriving show]
-
-and stmt =
-  | Let of var_dec
-  | If of expr * stmt list * stmt list option
-  | While of expr * stmt list
-  | Return of expr option
-  | Expr of expr
-[@@deriving show]
-
-and var_dec = { name : string; type_id : string; value : expr option }
-[@@deriving show]
-
-and fun_dec = {
-  name : string;
-  params : var_dec list;
-  type_id : string;
-  body : stmt list;
-}
-[@@deriving show]
-
-and decl = VarDec of var_dec | FunDec of fun_dec [@@deriving show]
-and program = decl list [@@deriving show]
+open Parsetree
+open Token
 
 (* Parser *)
-type parser = { lexer : lexer }
-and parser_error = { loc : location; msg : string }
+type t = { lexer : Lexer.t }
 
 let rec make lexer = { lexer }
+
+and make_loc parser =
+  Location.make parser.lexer.input_name parser.lexer.line
+    parser.lexer.col
 
 and advance parser =
   match lex parser.lexer with
@@ -248,7 +208,7 @@ and parse_var_dec parser =
       | _ ->
           Error
             {
-              loc = make_loc parser.lexer;
+              loc = make_loc parser;
               msg = "incorrect variable definition syntax";
             })
 
@@ -282,7 +242,7 @@ and parse_params parser =
           | _ ->
               Error
                 {
-                  loc = make_loc parser.lexer;
+                  loc = make_loc parser;
                   msg = "incorrect parameters definition syntax";
                 }))
 
@@ -330,13 +290,13 @@ and parse_if parser =
                   | _ ->
                       Error
                         {
-                          loc = make_loc parser.lexer;
+                          loc = make_loc parser;
                           msg = "incorrect if statment syntax";
                         })))
       | _ ->
           Error
             {
-              loc = make_loc parser.lexer;
+              loc = make_loc parser;
               msg = "incorrect if statment syntax";
             })
 
@@ -349,7 +309,7 @@ and parse_else parser =
       | _ ->
           Error
             {
-              loc = make_loc parser.lexer;
+              loc = make_loc parser;
               msg = "incorrect else statment syntax";
             })
 
@@ -370,15 +330,12 @@ and parse_return parser =
               | Ok (token, parser) when token.kind = SEMICOLON ->
                   Ok (Return (Some exp), parser)
               | _ ->
-                  Error
-                    {
-                      loc = make_loc parser.lexer;
-                      msg = "missing ';'";
-                    })))
+                  Error { loc = make_loc parser; msg = "missing ';'" }
+              )))
   | _ ->
       Error
         {
-          loc = make_loc parser.lexer;
+          loc = make_loc parser;
           msg = "incorrect return statment syntax";
         }
 
@@ -403,7 +360,7 @@ and parse_while parser =
                   | _ ->
                       Error
                         {
-                          loc = make_loc parser.lexer;
+                          loc = make_loc parser;
                           msg =
                             "incorrect while statment syntax after \
                              condition";
@@ -411,7 +368,7 @@ and parse_while parser =
       | _ ->
           Error
             {
-              loc = make_loc parser.lexer;
+              loc = make_loc parser;
               msg = "incorrect while statment syntax before condition";
             })
 
@@ -423,8 +380,7 @@ and parse_expr_stmt parser =
       | Error e -> Error e
       | Ok (token, parser) when token.kind = SEMICOLON ->
           Ok (Expr exp, parser)
-      | _ ->
-          Error { loc = make_loc parser.lexer; msg = "missing ';'" })
+      | _ -> Error { loc = make_loc parser; msg = "missing ';'" })
 
 and parse_stmts parser =
   match advance parser with
@@ -466,7 +422,7 @@ and parse_fun_dec parser =
                   | _ ->
                       Error
                         {
-                          loc = make_loc parser.lexer;
+                          loc = make_loc parser;
                           msg =
                             "incorrect function definition syntax \
                              after params";
@@ -474,7 +430,7 @@ and parse_fun_dec parser =
       | _ ->
           Error
             {
-              loc = make_loc parser.lexer;
+              loc = make_loc parser;
               msg =
                 "incorrect function definition syntax before params";
             })
@@ -495,7 +451,7 @@ and parse_decl parser =
       | _ ->
           Error
             {
-              loc = make_loc parser.lexer;
+              loc = make_loc parser;
               msg = "incorrect declaration syntax";
             })
 
@@ -508,7 +464,7 @@ and parse_program parser =
       | Ok (token, _) when token.kind = FUN || token.kind = LET -> (
           match parse_program parser with
           | Error e -> Error e
-          | Ok (decls, parser) -> Ok (decl :: decls, parser))
-      | _ -> Ok ([ decl ], parser))
+          | Ok decls -> Ok (decl :: decls))
+      | _ -> Ok ([ decl ] : Parsetree.t))
 
 and parse parser = parse_program parser
