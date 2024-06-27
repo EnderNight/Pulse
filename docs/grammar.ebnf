@@ -13,7 +13,12 @@ primary_expr =
 | "(" expression ")"
 ;
 
-postfix_expr = primary_expr [ "(" [ expr ] ")" ] ;
+postfix_expr =
+| primary_expr
+| ID "(" args ")"
+;
+
+args = [ expression { "," expression } ] ;
 
 mult_expr = postfix_expr { ("*" | "/") mult_expr } ;
 
@@ -23,17 +28,20 @@ rela_expr = add_expr { ("<" | "<=" | ">" | ">=") rela_expr } ;
 
 equ_expr = rela_expr { ("==" | "!=") equ_expr } ;
 
-assign_expr = [ ID "=" ] equ_expr ;
+assign_expr =
+| postfix_expr "=" equ_expr
+| equ_expr
+;
 
 expression = assign_expr ;
 
-expr_stmt = expression ";"
+expr_stmt = expression ";" ;
 
-if_stmt = "if" "(" expression ")" "{" statement { statement } "}" [ "else" "{" statement { statement } "}" ]
+if_stmt = "if" "(" expression ")" "{" statement { statement } "}" [ "else" "{" statement { statement } "}" ] ;
 
-while_stmt = "while" "(" expression ")" "{" statement { statement } "}"
+while_stmt = "while" "(" expression ")" "{" statement { statement } "}" ;
 
-return_stmt = "return" expression ";"
+return_stmt = "return" expression ";" ;
 
 statement =
 | var_dec

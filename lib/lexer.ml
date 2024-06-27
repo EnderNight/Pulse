@@ -1,3 +1,5 @@
+open Error
+
 type token_kind =
   (* Keywords *)
   | LET
@@ -34,20 +36,12 @@ type token_kind =
   | GE (* >= *)
   (* End of file *)
   | EOF
-[@@deriving show]
-
-(* Token location *)
-type location = { input_name : string; line : int; col : int }
-[@@deriving show]
 
 (* Token *)
-type token = { kind : token_kind; loc : location } [@@deriving show]
-
-(* Error *)
-type error = { loc : location; msg : string }
+type token = { kind : token_kind; loc : location }
 
 (* Lexer *)
-type t = {
+type lexer = {
   input : string;
   input_len : int;
   input_name : string;
@@ -61,6 +55,37 @@ let rec int_from_char c =
   match c with
   | '0' .. '9' -> int_of_char c - int_of_char '0'
   | _ -> failwith "int_from_char: c is not a digit"
+
+and show_token_value token =
+  match token.kind with
+  | LET -> "let"
+  | FUN -> "fun"
+  | RETURN -> "return"
+  | IF -> "if"
+  | ELSE -> "else"
+  | WHILE -> "while"
+  | ID id -> id
+  | INT_CONST i -> string_of_int i
+  | STR_LIT s -> s
+  | LPAREN -> "("
+  | RPAREN -> ")"
+  | COLON -> ":"
+  | LBRACK -> "{"
+  | RBRACK -> "}"
+  | SEMICOLON -> ";"
+  | COMMA -> ","
+  | PLUS -> "+"
+  | MINUS -> "-"
+  | MULT -> "*"
+  | DIV -> "/"
+  | ASSIGN -> "="
+  | EQUAL -> "=="
+  | NEQUAL -> "!="
+  | LT -> "<"
+  | LE -> "<="
+  | GT -> ">"
+  | GE -> ">="
+  | EOF -> "eof"
 
 and is_digit = function '0' .. '9' -> true | _ -> false
 and is_whitespace = function ' ' | '\n' | '\t' -> true | _ -> false
@@ -92,14 +117,12 @@ and make input name =
     col = 1;
   }
 
-and show_error error =
-  error.loc.input_name ^ ":"
-  ^ string_of_int error.loc.line
-  ^ "."
-  ^ string_of_int error.loc.col
-  ^ ": " ^ error.msg
-
 and get_token_kind token = token.kind
+
+and get_kind_list tokens =
+  match tokens with
+  | [] -> []
+  | token :: tokens -> token.kind :: get_kind_list tokens
 
 and advance lexer =
   if lexer.cursor < lexer.input_len - 1 then

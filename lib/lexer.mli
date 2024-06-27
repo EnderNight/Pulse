@@ -1,3 +1,5 @@
+open Error
+
 type token_kind =
   (* Keywords *)
   | LET
@@ -34,20 +36,12 @@ type token_kind =
   | GE (* >= *)
   (* End of file *)
   | EOF
-[@@deriving show]
-
-(* Token location *)
-type location = { input_name : string; line : int; col : int }
-[@@deriving show]
 
 (* Token *)
-type token = { kind : token_kind; loc : location } [@@deriving show]
-
-(* Error *)
-type error = { loc : location; msg : string }
+type token = { kind : token_kind; loc : location }
 
 (* Lexer *)
-type t = {
+type lexer = {
   input : string;
   input_len : int;
   input_name : string;
@@ -57,7 +51,9 @@ type t = {
   col : int;
 }
 
-val make : string -> string -> t
-val show_error : error -> string
+val make : string -> string -> lexer
+val make_loc : lexer -> location
 val get_token_kind : token -> token_kind
-val lex : t -> (token * t, error) result
+val get_kind_list : token list -> token_kind list
+val show_token_value : token -> string
+val lex : lexer -> (token * lexer, error) result
