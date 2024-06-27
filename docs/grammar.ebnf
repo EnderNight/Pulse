@@ -37,11 +37,11 @@ expression = assign_expr ;
 
 expr_stmt = expression ";" ;
 
-if_stmt = "if" "(" expression ")" "{" statement { statement } "}" [ "else" "{" statement { statement } "}" ] ;
+if_stmt = "if" "(" expression ")" "{" statements "}" [ "else" "{" statements "}" ] ;
 
-while_stmt = "while" "(" expression ")" "{" statement { statement } "}" ;
+while_stmt = "while" "(" expression ")" "{" statements "}" ;
 
-return_stmt = "return" expression ";" ;
+return_stmt = "return" [ expression ] ";" ;
 
 statement =
 | var_dec
