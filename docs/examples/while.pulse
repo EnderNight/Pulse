@@ -1,0 +1,10 @@
+fn main(): void {
+
+    let i: int = 0;
+
+    while (i < 5) {
+        print("I love while loops!\n");
+
+        i = i + 1;
+    }
+}

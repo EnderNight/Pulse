@@ -1,0 +1,20 @@
+fn main(): void {
+
+    let x: int = 69;
+
+    if (x < 420) {
+        print("Bellow\n");
+    }
+
+    if (x > 68) {
+        print("Above\n");
+    }
+
+    if (x == 69) { 
+        print("Nice\n");
+    }
+
+    else {
+        print("Noooo\n");
+    }
+}
