@@ -1,0 +1,20 @@
+fn main(): void {
+
+    let x: int = 69;
+
+    if (x < 420) {
+        write(1, "Bellow\n", 7);
+    }
+
+    if (x > 68) {
+        write(1, "Above\n", 6);
+    }
+
+    if (x == 69) { 
+        write(1, "Nice\n", 5);
+    }
+
+    else {
+        write(1, "Noooo\n", 6);
+    }
+}

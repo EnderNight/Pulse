@@ -1,0 +1,26 @@
+fn map(func: fn(int):int, arr: []int): []int {
+    let len = arr.length;
+    let i = 0;
+
+    while (i < len) {
+        arr[i] = func(arr[i]);
+
+        i++;
+    }
+
+    return arr;
+}
+
+fn main(): void {
+    // TODO: provide variable mutability support and arrays
+    let array, i = [1, 2, 3, 4], 0;
+    let len = array.length;
+
+    array = map(fn (value) => value * 2, array);
+
+    while (i < len) {
+        write(1, array[i], 1); // TODO: provide stdlib
+
+        i++;
+    }
+}

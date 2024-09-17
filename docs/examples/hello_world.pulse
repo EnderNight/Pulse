@@ -1,0 +1,4 @@
+fn main(): void {
+    // Linux syscalls available as native methods
+    write(1, "Hello World!", 12);
+}
