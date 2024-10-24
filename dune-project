@@ -5,22 +5,22 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github EnderNight/Pulse))
 
-(authors "Author Name")
+(authors "Ender")
 
-(maintainers "Maintainer Name")
+(maintainers "Ender")
 
-(license LICENSE)
+(license MIT)
 
-(documentation https://url/to/documentation)
+(documentation https://github.com/EnderNight/Pulse)
 
 (package
  (name Pulse)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "A simple programming language")
+ (description "A small and simple programming language")
  (depends ocaml dune)
  (tags
-  (topics "to describe" your project)))
+  (topics programming language)))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
