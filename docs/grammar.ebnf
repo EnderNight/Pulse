@@ -1,0 +1,6 @@
+expr = term EOF ;
+term = factor ( ("+" | "-") factor )* ;
+factor = primary ( ("*" | "/") primary )* ;
+primary = NUMBER ;
+
+NUMBER = [0-9]+ ;
