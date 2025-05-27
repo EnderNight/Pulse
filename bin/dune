@@ -1,4 +1,4 @@
 (executable
- (public_name pulse)
+ (public_name pulsec)
  (name main)
  (libraries pulse))
