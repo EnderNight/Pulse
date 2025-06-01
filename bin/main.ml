@@ -5,4 +5,5 @@ let () =
   else
     let open Pulse in
     read_whole_file Sys.argv.(1)
-    |> Lexer.init |> Lexer.lex |> List.map Token.show |> List.iter print_endline
+    |> Lexer.init |> Lexer.lex |> Parser.parse |> Parsetree.show
+    |> print_endline
