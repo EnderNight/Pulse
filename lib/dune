@@ -1,2 +1,4 @@
 (library
- (name pulse))
+ (name pulse)
+ (preprocess
+  (pps ppx_deriving.show)))
