@@ -1,6 +1,6 @@
 let rec parse_primary tokens =
   match tokens with
-  | Token.NUMBER num :: tl -> (Parsetree.Number (int_of_string num), tl)
+  | Token.NUMBER num :: tl -> (Parsetree.Number (Int64.of_string num), tl)
   | _ -> failwith "Unexpected token"
 
 and parse_factor tokens =
@@ -36,4 +36,3 @@ and parse_expr tokens =
   if List.is_empty tokens then term else failwith "Unexpected token"
 
 and parse tokens = parse_expr tokens
-
