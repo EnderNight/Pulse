@@ -1,6 +1,11 @@
 let rec parse_primary tokens =
   match tokens with
   | Token.NUMBER num :: tl -> (Parsetree.Number (Int64.of_string num), tl)
+  | Token.LPAREN :: tl -> (
+      let tree, tokens = parse_expr tl in
+      match tokens with
+      | Token.RPAREN :: tl -> (tree, tl)
+      | _ -> failwith "Expecting right parenthesis")
   | _ -> failwith "Unexpected token"
 
 and parse_factor tokens =
@@ -31,8 +36,10 @@ and parse_term tokens =
   in
   aux factor tokens
 
-and parse_expr tokens =
-  let term, tokens = parse_term tokens in
-  if List.is_empty tokens then term else failwith "Unexpected token"
+and parse_expr tokens = parse_term tokens
 
-and parse tokens = parse_expr tokens
+and parse_program tokens =
+  let term, tokens = parse_expr tokens in
+  if List.is_empty tokens then term else failwith "Expecting end of file"
+
+and parse tokens = parse_program tokens

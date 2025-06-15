@@ -32,4 +32,6 @@ and lex lexer =
       | '-' -> Token.MINUS :: lex (advance lexer)
       | '*' -> Token.MULT :: lex (advance lexer)
       | '/' -> Token.DIV :: lex (advance lexer)
+      | '(' -> Token.LPAREN :: lex (advance lexer)
+      | ')' -> Token.RPAREN :: lex (advance lexer)
       | _ -> failwith "Unknown character")

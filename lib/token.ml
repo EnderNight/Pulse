@@ -1,9 +1,11 @@
 type t =
   (* Constants *)
   | NUMBER of string
-  (* Symbols *)
+  (* Punctuators *)
   | PLUS
   | MINUS
   | MULT
   | DIV
+  | LPAREN
+  | RPAREN
 [@@deriving show]
