@@ -1,4 +1,4 @@
 (executable
- (public_name pulsec)
+ (public_name pulse)
  (name main)
- (libraries pulse))
+ (libraries pulse cmdliner))

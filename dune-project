@@ -19,6 +19,9 @@
  (name pulse)
  (synopsis "Simple programming language")
  (description "Simple programming language")
- (depends ocaml)
+ (depends
+  (ocaml (>= 5.3))
+  (ppx_deriving (>= 6.1))
+  (cmdliner (>= 1.3)))
  (tags
   (programming language)))

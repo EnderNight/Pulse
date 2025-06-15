@@ -2,7 +2,7 @@
 
 ## Types
 
-- Numbers: same as ocaml's integers
+- Numbers: 64 bit unsigned integers
 
 ## Arithmetics
 

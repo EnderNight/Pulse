@@ -4,7 +4,7 @@
 
 ### Args
 
-- n: A 64 bit integer
+- n: A 64 bit unsigned integer
 
 ### Description
 
