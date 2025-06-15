@@ -1,5 +1,3 @@
-open Cmdliner
-
 let compile input_file output_file =
   Io.read_whole_file input_file
   |> Lexer.init |> Lexer.lex |> Parser.parse |> Compiler.compile
@@ -12,6 +10,13 @@ let run input_file =
 let disasm input_file =
   Bytecode.read_from_file input_file
   |> List.iter (fun inst -> print_endline (Bytecode.show inst))
+
+let exec input_file =
+  Io.read_whole_file input_file
+  |> Lexer.init |> Lexer.lex |> Parser.parse |> Compiler.compile |> Vm.run
+  |> Int64.to_string |> print_endline
+
+open Cmdliner
 
 let rec compile_cmd =
   let input_file = Arg.(required & pos 0 (some string) None & info [])
@@ -28,8 +33,17 @@ and run_cmd =
 
 and disasm_cmd =
   let input_file = Arg.(required & pos 0 (some string) None & info []) in
-  let disassemble_t = Term.(const disasm $ input_file) in
+  let disasm_t = Term.(const disasm $ input_file) in
   let info = Cmd.info "disasm" in
-  Cmd.v info disassemble_t
+  Cmd.v info disasm_t
 
-and commands = [ compile_cmd; run_cmd; disasm_cmd ]
+and exec_cmd =
+  let input_file = Arg.(required & pos 0 (some string) None & info []) in
+  let exec_t = Term.(const exec $ input_file) in
+  let info = Cmd.info "exec" in
+  Cmd.v info exec_t
+
+and main () =
+  let info = Cmd.info "pulse" in
+  let cmd = Cmd.group info [ compile_cmd; run_cmd; disasm_cmd; exec_cmd ] in
+  Cmd.eval cmd
