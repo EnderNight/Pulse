@@ -31,3 +31,4 @@ _opam/
 # Misc
 a.out
 a.pulsebyc
+*.tar.gz
