@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of Pulse
 - Support for:
     - Arithmetic expressions ('+', '-', '*' and '/') with their proper precedence.
+    - Priority with parenthesis.
     - Stack-based virtual machine, called 'PulseVM', with 6 instructions.
     - Cli with 4 commands: 'compile', 'run', 'exec' and 'disasm'.
     - Custom bytecode format, called 'PulseByc', with serialization/deserialization.
