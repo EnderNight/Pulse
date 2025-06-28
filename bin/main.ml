@@ -1,1 +1,1 @@
-let () = exit 1
+let () = exit (Pulse.Cli.main ())

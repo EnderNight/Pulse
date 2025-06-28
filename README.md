@@ -10,8 +10,5 @@ As of now, it is a simple calculator.
 
 # TODO
 
-- Remove any use of `failwith`
 - Variables
 - Unit/functional tests
-- Better error handling
-- Error reporting

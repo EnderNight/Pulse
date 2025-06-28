@@ -6,6 +6,9 @@ type token_type =
   | MINUS
   | MULT
   | DIV
+  (* Punctuators *)
+  | LPAREN
+  | RPAREN
   (* Misc *)
   | EOF
 

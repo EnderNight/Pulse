@@ -1,5 +1,3 @@
 (library
  (name pulse)
- (libraries cmdliner)
- (preprocess
-  (pps ppx_deriving.show)))
+ (libraries cmdliner))
