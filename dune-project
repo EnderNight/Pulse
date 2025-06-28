@@ -2,7 +2,7 @@
 
 (name pulse)
 
-(version 0.1)
+(version 0.1.0)
 
 (generate_opam_files true)
 

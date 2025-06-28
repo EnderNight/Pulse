@@ -52,7 +52,8 @@ and disasm_cmd =
   Cmd.v info disasm_t
 
 and main () =
-  let info = Cmd.info "pulse" in
+  let version = "v0.1.0" in
+  let info = Cmd.info "pulse" ~version in
   let cmd =
     Cmd.group info [ exec_cmd; compile_cmd; run_cmd; disasm_cmd ]
   in
