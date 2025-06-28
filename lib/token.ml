@@ -1,11 +1,17 @@
-type t =
+type token_type =
   (* Constants *)
-  | NUMBER of string
-  (* Punctuators *)
+  | INT of string
+  (* Operators *)
   | PLUS
   | MINUS
   | MULT
   | DIV
-  | LPAREN
-  | RPAREN
-[@@deriving show]
+  (* Misc *)
+  | EOF
+
+type t = {
+  ttype : token_type;
+  loc : Location.t;
+}
+
+let make ttype loc = { ttype; loc }
