@@ -2,7 +2,8 @@ let exec input_file =
   Io.read_file input_file |> Lexer.make input_file |> Parser.parse
   |> Result.fold
        ~ok:(fun tree ->
-         Compiler.compile tree |> Vm.exec |> Int64.to_string)
+         Compiler.compile tree |> Vm.exec
+         |> Result.fold ~ok:Int64.to_string ~error:Fun.id)
        ~error:Report.show
   |> print_endline
 
@@ -16,7 +17,9 @@ and compile input_file output_file =
 
 and run input_file =
   In_channel.with_open_bin input_file Bytecode.read_from_file
-  |> Vm.exec |> Int64.to_string |> print_endline
+  |> Vm.exec
+  |> Result.fold ~ok:Int64.to_string ~error:Fun.id
+  |> print_endline
 
 and disasm input_file =
   In_channel.with_open_bin input_file Bytecode.read_from_file

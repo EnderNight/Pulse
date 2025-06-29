@@ -5,4 +5,4 @@
   $ pulse run a.pulsebyc
   69
 
-  $ rm test.pulse
+  $ rm a.pulsebyc test.pulse
