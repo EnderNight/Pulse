@@ -1,8 +1,8 @@
-  $ echo "34 + 35;" > test.pulse
+  $ echo "print 34 + 35;" > test.pulse
 
   $ pulse compile test.pulse
 
   $ pulse run a.pulsebyc
-  69
+  E
 
   $ rm a.pulsebyc test.pulse

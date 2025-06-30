@@ -19,7 +19,9 @@ and compile_tree tree =
   | Bindtree.Let (_, id, expr, _) ->
       let e = compile_expr expr in
       e @ [ Bytecode.STORE id ]
-  | Bindtree.Expr expr -> compile_expr expr
+  | Bindtree.Print (expr, _) ->
+      let e = compile_expr expr in
+      e @ [ Bytecode.PRINT ]
 
 and compile trees variable_pool_count =
   let instructions =

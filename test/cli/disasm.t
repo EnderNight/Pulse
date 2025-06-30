@@ -1,4 +1,4 @@
-  $ echo "34 + 35;" > test.pulse
+  $ echo "print 34 + 35;" > test.pulse
 
   $ pulse compile test.pulse
 
@@ -9,6 +9,7 @@
   PUSH 34
   PUSH 35
   ADD
+  PRINT
   HALT
   
 

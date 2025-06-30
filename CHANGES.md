@@ -15,7 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - New Bindtree with a binder that maps variable usage to their definition.
     - New `LOAD` and `STORE` vm instructions as well as a 'variable pool' that contains variable values.
     - New bytecode format, with a header containing the compiler version.
-    
+- 'print' command:
+    - New 'print expr' command that prints the ASCII representation of 'expr'.
+    - New `PRINT` vm instruction.
+
 ### Changed
 
 - Add 'linux' to release archive name.

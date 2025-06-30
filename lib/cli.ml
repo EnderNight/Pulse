@@ -2,9 +2,7 @@ let ( let* ) = Result.bind
 
 let exec input_file =
   Result.fold
-    ~ok:(fun result ->
-      Int64.to_string result |> print_endline;
-      0)
+    ~ok:(fun _ -> 0)
     ~error:(fun report ->
       Report.show report |> print_endline;
       1)
@@ -31,9 +29,7 @@ and compile input_file output_file =
 
 and run input_file =
   Result.fold
-    ~ok:(fun result ->
-      Int64.to_string result |> print_endline;
-      0)
+    ~ok:(fun _ -> 0)
     ~error:(fun report ->
       Report.show report |> print_endline;
       1)

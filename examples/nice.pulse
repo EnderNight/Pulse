@@ -1,0 +1,7 @@
+let six = 54;
+let nine = 57;
+let new_line = 10;
+
+print six;
+print nine;
+print new_line;

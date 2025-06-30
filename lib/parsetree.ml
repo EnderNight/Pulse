@@ -11,4 +11,4 @@ type expr =
 
 type t =
   | Let of string * expr * Location.t
-  | Expr of expr
+  | Print of expr * Location.t

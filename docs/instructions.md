@@ -80,3 +80,14 @@ Push the variable value at index `n` in the variable pool on top of the stack.
 
 Set the variable value at index `n` in the variable pool to the value on top of the stack.
 Pop the stack.
+
+## `PRINT`
+
+### Args
+
+None.
+
+### Description
+
+Print on stdout the corresponding ASCII representation of the value on top of the stack.
+Pop the stack.

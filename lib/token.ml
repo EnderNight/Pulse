@@ -14,6 +14,7 @@ type token_kind =
   | SEMICOLON
   (* Keywords *)
   | LET
+  | PRINT
   (* Misc *)
   | EOF
 
@@ -36,9 +37,13 @@ and name_of_token_kind = function
   | RPAREN -> "right parenthesis"
   | SEMICOLON -> "semicolon"
   | LET -> "'let'"
+  | PRINT -> "'print'"
   | EOF -> "end of file"
 
-and keyword_of_string_opt = function "let" -> Some LET | _ -> None
+and keyword_of_string_opt = function
+  | "let" -> Some LET
+  | "print" -> Some PRINT
+  | _ -> None
 
 and token_kind_loose_equal t1 t2 =
   match (t1, t2) with

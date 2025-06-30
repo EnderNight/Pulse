@@ -3,7 +3,7 @@ program =
 
 statment =
   | "let" IDENT "=" expr ";"
-  | expr ";"
+  | "print" expr ";"
   ;
 
 expr =

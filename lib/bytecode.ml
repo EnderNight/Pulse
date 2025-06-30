@@ -14,6 +14,7 @@ type instruction =
   | DIV
   | LOAD of int
   | STORE of int
+  | PRINT
 
 type t = {
   header : header;
@@ -38,6 +39,7 @@ and int_of_instruction inst =
   | DIV -> 0x5
   | LOAD _ -> 0x6
   | STORE _ -> 0x7
+  | PRINT -> 0x8
 
 and bytes_of_instruction inst =
   let code = int_of_instruction inst
@@ -66,6 +68,7 @@ and string_of_instruction inst =
   | DIV -> "DIV"
   | LOAD id -> "LOAD " ^ string_of_int id
   | STORE id -> "STORE " ^ string_of_int id
+  | PRINT -> "PRINT"
 
 and instruction_of_int code =
   match code with
@@ -77,6 +80,7 @@ and instruction_of_int code =
   | 0x5 -> DIV
   | 0x6 -> LOAD 0
   | 0x7 -> STORE 0
+  | 0x8 -> PRINT
   | _ -> failwith "Unknown code"
 
 and show_header header =

@@ -77,10 +77,10 @@ and parse_term lexer =
 and parse_expr lexer = parse_term lexer
 
 and parse_statment lexer =
-  let* token, next_lexer = Lexer.next_token lexer in
+  let* token, lexer = expect_or lexer [ LET; PRINT ] in
   match token.kind with
   | LET -> (
-      let* tokens, lexer = expect_list next_lexer [ IDENT ""; EQ ] in
+      let* tokens, lexer = expect_list lexer [ IDENT ""; EQ ] in
       match List.nth tokens 0 with
       | { kind = IDENT ident; loc } ->
           let* expr, lexer = parse_expr lexer in
@@ -90,7 +90,7 @@ and parse_statment lexer =
   | _ ->
       let* expr, lexer = parse_expr lexer in
       let* _, lexer = expect lexer SEMICOLON in
-      Ok (Parsetree.Expr expr, lexer)
+      Ok (Parsetree.Print (expr, token.loc), lexer)
 
 and parse_program lexer =
   let rec aux lexer acc =

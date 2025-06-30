@@ -1,6 +1,6 @@
-  $ echo "let a = 34; let b = 35; a + b;" > test.pulse
+  $ echo "let a = 34; let b = 35; print a + b;" > test.pulse
 
   $ pulse exec test.pulse
-  69
+  E
 
   $ rm test.pulse

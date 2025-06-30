@@ -27,9 +27,9 @@ and bind_tree tree env acc =
       Hashtbl.add env ident acc;
       let* expr = bind_expr expr env in
       Ok (Bindtree.Let (ident, acc, expr, loc), acc + 1)
-  | Parsetree.Expr expr ->
+  | Parsetree.Print (expr, loc) ->
       let* expr = bind_expr expr env in
-      Ok (Bindtree.Expr expr, acc)
+      Ok (Bindtree.Print (expr, loc), acc)
 
 and bind trees =
   let env = Hashtbl.create 8 in

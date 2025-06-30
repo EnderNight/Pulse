@@ -2,7 +2,7 @@ let exec (bytecode : Bytecode.t) =
   let rec aux insts stack var_pool =
     match insts with
     | [] -> Error (Report.make "Missing HALT instruction")
-    | Bytecode.HALT :: _ -> Ok (List.hd stack)
+    | Bytecode.HALT :: _ -> Ok ()
     | Bytecode.PUSH n :: tl -> aux tl (n :: stack) var_pool
     | Bytecode.ADD :: tl -> (
         match stack with
@@ -30,6 +30,12 @@ let exec (bytecode : Bytecode.t) =
             Array.set var_pool id a;
             aux tl stl var_pool
         | _ -> Error (Report.make "Not enough arguments"))
+    | Bytecode.PRINT :: tl -> (
+        match stack with
+        | a :: stl ->
+            Int64.to_int a |> Char.chr |> print_char;
+            aux tl stl var_pool
+        | _ -> Error (Report.make "Not engough arguements"))
   in
   aux bytecode.instructions []
     (Array.make bytecode.header.variable_pool_count Int64.zero)
