@@ -6,7 +6,7 @@ As of now, it is a simple calculator.
 
 - See [features.md](docs/features.md) for a description of each features.
 - See [cli.md](docs/cli.md) for help on the cli.
-- See [instructions.md](docs/instructions.md) for a description of each VM instructions.
+- See [vm_and_bytecode.md](docs/vm_and_bytecode.md.md) for a description of the VM and the bytecode.
 
 # TODO
 

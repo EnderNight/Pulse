@@ -1,8 +1,8 @@
 let rec compile_expr expr =
   match expr with
-  | Bindtree.Int n -> [ Bytecode.PUSH n ]
-  | Bindtree.Var (_, id) -> [ Bytecode.LOAD (Int64.of_int id) ]
-  | Bindtree.BinOp (binop, lhs, rhs) ->
+  | Bindtree.Int (n, _) -> [ Bytecode.PUSH n ]
+  | Bindtree.Var (_, id, _) -> [ Bytecode.LOAD id ]
+  | Bindtree.BinOp (binop, lhs, rhs, _) ->
       let l = compile_expr lhs
       and r = compile_expr rhs
       and binop_inst =
@@ -16,9 +16,9 @@ let rec compile_expr expr =
 
 and compile_tree tree =
   match tree with
-  | Bindtree.Let (_, id, expr) ->
+  | Bindtree.Let (_, id, expr, _) ->
       let e = compile_expr expr in
-      e @ [ Bytecode.STORE (Int64.of_int id) ]
+      e @ [ Bytecode.STORE id ]
   | Bindtree.Expr expr -> compile_expr expr
 
 and compile trees variable_pool_count =

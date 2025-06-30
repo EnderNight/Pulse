@@ -86,7 +86,7 @@ and next_token lexer =
             | Some kind -> Ok (kind, next_lexer)
             | _ -> Ok (Token.IDENT ident, next_lexer))
         | c ->
-            let msg = "Unexpected character '" ^ String.make 1 c ^ "'" in
+            let msg = "unknown character '" ^ String.make 1 c ^ "'" in
             Error (Report.make_loc loc msg))
   in
   let* ttype, lexer = get_ttype lexer in

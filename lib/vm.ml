@@ -23,12 +23,11 @@ let exec (bytecode : Bytecode.t) =
               Error (Report.make "Error: division by zero")
             else aux tl (Int64.div b a :: stl) var_pool
         | _ -> Error (Report.make "Not enough arguements"))
-    | Bytecode.LOAD id :: tl ->
-        aux tl (var_pool.(Int64.to_int id) :: stack) var_pool
+    | Bytecode.LOAD id :: tl -> aux tl (var_pool.(id) :: stack) var_pool
     | Bytecode.STORE id :: tl -> (
         match stack with
         | a :: stl ->
-            Array.set var_pool (Int64.to_int id) a;
+            Array.set var_pool id a;
             aux tl stl var_pool
         | _ -> Error (Report.make "Not enough arguments"))
   in

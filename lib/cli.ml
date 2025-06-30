@@ -1,17 +1,25 @@
 let ( let* ) = Result.bind
 
 let exec input_file =
-  Result.fold ~ok:Int64.to_string ~error:Report.show
+  Result.fold
+    ~ok:(fun result ->
+      Int64.to_string result |> print_endline;
+      0)
+    ~error:(fun report ->
+      Report.show report |> print_endline;
+      1)
     (let* trees =
        Io.read_file input_file |> Lexer.make input_file |> Parser.parse
      in
      let* bound_trees, vpc = Binder.bind trees in
      Compiler.compile bound_trees vpc |> Vm.exec)
-  |> print_endline
 
 and compile input_file output_file =
-  Result.fold ~ok:Fun.id
-    ~error:(fun report -> Report.show report |> print_endline)
+  Result.fold
+    ~ok:(fun _ -> 0)
+    ~error:(fun report ->
+      Report.show report |> print_endline;
+      1)
     (let* trees =
        Io.read_file input_file |> Lexer.make input_file |> Parser.parse
      in
@@ -22,14 +30,20 @@ and compile input_file output_file =
           (Bytecode.write_to_file bytecode)))
 
 and run input_file =
-  Result.fold ~ok:Int64.to_string ~error:Report.show
+  Result.fold
+    ~ok:(fun result ->
+      Int64.to_string result |> print_endline;
+      0)
+    ~error:(fun report ->
+      Report.show report |> print_endline;
+      1)
     (In_channel.with_open_bin input_file Bytecode.read_from_file
     |> Vm.exec)
-  |> print_endline
 
 and disasm input_file =
   In_channel.with_open_bin input_file Bytecode.read_from_file
-  |> Bytecode.show |> print_endline
+  |> Bytecode.show |> print_endline;
+  0
 
 open Cmdliner
 
@@ -61,9 +75,16 @@ and disasm_cmd =
   Cmd.v info disasm_t
 
 and main () =
-  let version = "v0.1.0" in
+  let version =
+    "v"
+    ^ string_of_int Utils.major
+    ^ "."
+    ^ string_of_int Utils.minor
+    ^ "."
+    ^ string_of_int Utils.patch
+  in
   let info = Cmd.info "pulse" ~version in
   let cmd =
     Cmd.group info [ exec_cmd; compile_cmd; run_cmd; disasm_cmd ]
   in
-  Cmd.eval cmd
+  Cmd.eval' cmd

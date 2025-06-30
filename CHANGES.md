@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - PulseVM runtime checks for division by zero.
-
+- Support for variables:
+    - Defined with 'let id = expr;' with proper error handling.
+    - New Bindtree with a binder that maps variable usage to their definition.
+    - New `LOAD` and `STORE` vm instructions as well as a 'variable pool' that contains variable values.
+    - New bytecode format, with a header containing the compiler version.
+    
 ### Changed
 
 - Add 'linux' to release archive name.
+- Error handling and reporting, with proper exit code in case of an error.
 
 ## [0.1.0] - 2025-06-28
 

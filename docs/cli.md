@@ -28,3 +28,8 @@ Does not create any temporary files
 
 Disassemble a pulse bytecode program named ARG and show the instructions on the standard output.
 See [instructions.md](instructions.md) for a description of each VM instructions
+
+## Return code
+
+- `0` in case of success.
+- `1` in case of an error, with a proper error message.

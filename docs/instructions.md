@@ -1,5 +1,15 @@
 # Instructions
 
+## `HALT`
+
+### Args
+
+None.
+
+### Description
+
+Stop the VM.
+
 ## `PUSH n`
 
 ### Args
@@ -50,12 +60,23 @@ None.
 
 Divide the first two numbers on top of the stack and push the result.
 
-## `HALT`
+## `LOAD n`
 
 ### Args
 
-None.
+- n: A 16 bit unsigned integer
 
 ### Description
 
-Stop the VM.
+Push the variable value at index `n` in the variable pool on top of the stack.
+
+## `STORE n`
+
+### Args
+
+- n: A 16 bit unsigned integer
+
+### Description
+
+Set the variable value at index `n` in the variable pool to the value on top of the stack.
+Pop the stack.

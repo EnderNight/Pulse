@@ -12,8 +12,8 @@ type instruction =
   | SUB
   | MULT
   | DIV
-  | LOAD of int64
-  | STORE of int64
+  | LOAD of int
+  | STORE of int
 
 type t = {
   header : header;
@@ -43,9 +43,13 @@ and bytes_of_instruction inst =
   let code = int_of_instruction inst
   and bytes =
     match inst with
-    | PUSH n | LOAD n | STORE n ->
+    | PUSH n ->
         let byte = Bytes.create 9 in
         Bytes.set_int64_be byte 1 n;
+        byte
+    | LOAD n | STORE n ->
+        let byte = Bytes.create 3 in
+        Bytes.set_uint16_be byte 1 n;
         byte
     | _ -> Bytes.create 1
   in
@@ -60,8 +64,8 @@ and string_of_instruction inst =
   | SUB -> "SUB"
   | MULT -> "MULT"
   | DIV -> "DIV"
-  | LOAD id -> "LOAD " ^ Int64.to_string id
-  | STORE id -> "STORE " ^ Int64.to_string id
+  | LOAD id -> "LOAD " ^ string_of_int id
+  | STORE id -> "STORE " ^ string_of_int id
 
 and instruction_of_int code =
   match code with
@@ -71,8 +75,8 @@ and instruction_of_int code =
   | 0x3 -> SUB
   | 0x4 -> MULT
   | 0x5 -> DIV
-  | 0x6 -> LOAD Int64.zero
-  | 0x7 -> STORE Int64.zero
+  | 0x6 -> LOAD 0
+  | 0x7 -> STORE 0
   | _ -> failwith "Unknown code"
 
 and show_header header =
@@ -128,17 +132,16 @@ and read_header_from_file file =
       { major; minor; patch; variable_pool_count }
 
 and read_instructions_from_file file =
-  let read_int64 () =
-    let rec aux n acc =
-      if n = 0 then acc
-      else
-        match In_channel.input_byte file with
-        | None -> failwith "read_int64: not enough bytes to read"
-        | Some c ->
-            aux (n - 1) Int64.(logor (shift_left acc 8) (of_int c))
-    in
-    aux 8 Int64.zero
+  let rec read_int n acc =
+    if n = 0 then acc
+    else
+      match In_channel.input_byte file with
+      | None -> failwith "read_int64: not enough bytes to read"
+      | Some c ->
+          read_int (n - 1) Int64.(logor (shift_left acc 8) (of_int c))
   in
+  let read_int64 () = read_int 8 Int64.zero
+  and read_uin16 () = read_int 2 Int64.zero in
   let rec aux acc =
     match In_channel.input_byte file with
     | Some code -> (
@@ -148,11 +151,11 @@ and read_instructions_from_file file =
             let num = read_int64 () in
             aux (PUSH num :: acc)
         | LOAD _ ->
-            let num = read_int64 () in
-            aux (LOAD num :: acc)
+            let num = read_uin16 () in
+            aux (LOAD (Int64.to_int num) :: acc)
         | STORE _ ->
-            let num = read_int64 () in
-            aux (STORE num :: acc)
+            let num = read_uin16 () in
+            aux (STORE (Int64.to_int num) :: acc)
         | _ -> aux (inst :: acc))
     | _ -> acc
   in
