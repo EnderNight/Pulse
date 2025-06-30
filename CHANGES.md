@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - PulseVM runtime checks for division by zero.
 
+### Changed
+
+- Add 'linux' to release archive name.
+
 ## [0.1.0] - 2025-06-28
 
 ### Added

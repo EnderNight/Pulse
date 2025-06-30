@@ -1,7 +1,29 @@
-program = expr EOF ;
-expr = term ;
-term = factor ( ("+" | "-") factor )* ;
-factor = primary ( ("*" | "/") primary )* ;
-primary = NUMBER | "(" expr ")" ;
+program =
+  | statment+ EOF ;
+
+statment =
+  | "let" IDENT "=" expr ";"
+  | expr ";"
+  ;
+
+expr =
+  | term
+  ;
+
+term =
+  | factor ( ("+" | "-") factor )*
+  ;
+
+factor =
+  | primary ( ("*" | "/") primary )*
+  ;
+
+primary =
+  | NUMBER
+  | IDENT
+  | "(" expr ")"
+  ;
+
 
 NUMBER = [0-9]+ ;
+IDENT = [a-zA-Z_][a-zA-Z0-9_]* ;

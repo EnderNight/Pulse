@@ -10,5 +10,5 @@ As of now, it is a simple calculator.
 
 # TODO
 
-- Variables
+- Change STORE n size to match variable_pool_count's size
 - Unit/functional tests

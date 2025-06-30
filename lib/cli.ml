@@ -1,29 +1,35 @@
+let ( let* ) = Result.bind
+
 let exec input_file =
-  Io.read_file input_file |> Lexer.make input_file |> Parser.parse
-  |> Result.fold
-       ~ok:(fun tree ->
-         Compiler.compile tree |> Vm.exec
-         |> Result.fold ~ok:Int64.to_string ~error:Fun.id)
-       ~error:Report.show
+  Result.fold ~ok:Int64.to_string ~error:Report.show
+    (let* trees =
+       Io.read_file input_file |> Lexer.make input_file |> Parser.parse
+     in
+     let* bound_trees, vpc = Binder.bind trees in
+     Compiler.compile bound_trees vpc |> Vm.exec)
   |> print_endline
 
 and compile input_file output_file =
-  Io.read_file input_file |> Lexer.make input_file |> Parser.parse
-  |> Result.fold
-       ~ok:(fun tree ->
-         Out_channel.with_open_bin output_file
-           (Compiler.compile tree |> Bytecode.write_to_file))
-       ~error:(fun report -> Report.show report |> print_endline)
+  Result.fold ~ok:Fun.id
+    ~error:(fun report -> Report.show report |> print_endline)
+    (let* trees =
+       Io.read_file input_file |> Lexer.make input_file |> Parser.parse
+     in
+     let* bound_trees, vpc = Binder.bind trees in
+     let bytecode = Compiler.compile bound_trees vpc in
+     Ok
+       (Out_channel.with_open_bin output_file
+          (Bytecode.write_to_file bytecode)))
 
 and run input_file =
-  In_channel.with_open_bin input_file Bytecode.read_from_file
-  |> Vm.exec
-  |> Result.fold ~ok:Int64.to_string ~error:Fun.id
+  Result.fold ~ok:Int64.to_string ~error:Report.show
+    (In_channel.with_open_bin input_file Bytecode.read_from_file
+    |> Vm.exec)
   |> print_endline
 
 and disasm input_file =
   In_channel.with_open_bin input_file Bytecode.read_from_file
-  |> List.iter (fun inst -> Bytecode.to_string inst |> print_endline)
+  |> Bytecode.show |> print_endline
 
 open Cmdliner
 

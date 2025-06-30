@@ -1,15 +1,17 @@
 #!/bin/sh
 
 VERSION='v0.1.0'
+NAME="pulse-$VERSION-linux"
 
+dune clean
 dune build @install
-dune install --prefix="./pulse-$VERSION"
+dune install --prefix="./$NAME"
 
-rm -rvf "pulse-$VERSION/lib"
-mv -v "pulse-$VERSION/doc/pulse/"* "pulse-$VERSION/doc"
-rmdir -v "pulse-$VERSION/doc/pulse"
-cp -rv docs "pulse-$VERSION/doc"
+rm -rvf "$NAME/lib"
+mv -v "$NAME/doc/pulse/"* "$NAME/doc"
+rmdir -v "$NAME/doc/pulse"
+cp -rv docs "$NAME/doc"
 
-tar czvf "pulse-$VERSION.tar.gz" "pulse-$VERSION"
+tar czvf "$NAME.tar.gz" "$NAME"
 
-rm -rvf "pulse-$VERSION"
+rm -rvf "$NAME"

@@ -1,34 +1,56 @@
+open Token
+
 let ( let* ) = Result.bind
 
-let rec parse_primary lexer =
+let rec expect lexer kind =
   let* token, lexer = Lexer.next_token lexer in
-  match token.ttype with
-  | Token.INT n -> Ok (Parsetree.Int (Int64.of_string n), lexer)
-  | Token.LPAREN -> (
-      let* expr, lexer = parse_expr lexer in
-      let* token, lexer = Lexer.next_token lexer in
-      match token.ttype with
-      | Token.RPAREN -> Ok (expr, lexer)
-      | _ ->
-          Error
-            (Report.make token.loc
-               "Unexpected token. Expecting a closing parenthesis"))
+  if token_kind_loose_equal token.kind kind then Ok (token, lexer)
+  else
+    Error
+      (Report.make_loc token.loc
+         ("Unexpected token. Expecting " ^ name_of_token_kind kind))
+
+and expect_list lexer kinds =
+  match kinds with
+  | kind :: tl ->
+      let* token, lexer = expect lexer kind in
+      let* tokens, lexer = expect_list lexer tl in
+      Ok (token :: tokens, lexer)
+  | [] -> Ok ([], lexer)
+
+and expect_or lexer kinds =
+  let* token, lexer = Lexer.next_token lexer in
+  let equals = List.map (token_kind_loose_equal token.kind) kinds in
+  if Utils.any equals then Ok (token, lexer)
+  else
+    let msg =
+      "Unexpected token. Expecting "
+      ^ String.concat " or " (List.map name_of_token_kind kinds)
+      ^ "."
+    in
+    Error (Report.make_loc token.loc msg)
+
+and parse_primary lexer =
+  let* token, lexer = expect_or lexer [ INT ""; IDENT ""; LPAREN ] in
+  match token.kind with
+  | INT num -> Ok (Parsetree.Int (Int64.of_string num), lexer)
+  | IDENT id -> Ok (Parsetree.Var id, lexer)
   | _ ->
-      Error
-        (Report.make token.loc
-           "Unexpected token. Expecting a number or a left parenthesis")
+      let* expr, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer RPAREN in
+      Ok (expr, lexer)
 
 and parse_factor lexer =
   let* primary, lexer = parse_primary lexer in
   let rec aux lexer tree =
     let* token, next_lexer = Lexer.next_token lexer in
-    match token.ttype with
-    | Token.MULT ->
+    match token.kind with
+    | MULT ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer (Parsetree.Mult (tree, primary))
-    | Token.DIV ->
+        aux lexer (Parsetree.BinOp (Parsetree.Mult, tree, primary))
+    | DIV ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer (Parsetree.Div (tree, primary))
+        aux lexer (Parsetree.BinOp (Parsetree.Div, tree, primary))
     | _ -> Ok (tree, lexer)
   in
   aux lexer primary
@@ -37,25 +59,43 @@ and parse_term lexer =
   let* factor, lexer = parse_factor lexer in
   let rec aux lexer tree =
     let* token, next_lexer = Lexer.next_token lexer in
-    match token.ttype with
-    | Token.PLUS ->
+    match token.kind with
+    | PLUS ->
         let* factor, lexer = parse_factor next_lexer in
-        aux lexer (Parsetree.Plus (tree, factor))
-    | Token.MINUS ->
+        aux lexer (Parsetree.BinOp (Parsetree.Plus, tree, factor))
+    | MINUS ->
         let* factor, lexer = parse_factor next_lexer in
-        aux lexer (Parsetree.Minus (tree, factor))
+        aux lexer (Parsetree.BinOp (Parsetree.Minus, tree, factor))
     | _ -> Ok (tree, lexer)
   in
   aux lexer factor
 
 and parse_expr lexer = parse_term lexer
 
+and parse_statment lexer =
+  let* token, next_lexer = Lexer.next_token lexer in
+  match token.kind with
+  | LET -> (
+      let* tokens, lexer = expect_list next_lexer [ IDENT ""; EQ ] in
+      match List.nth tokens 0 with
+      | { kind = IDENT ident; _ } ->
+          let* expr, lexer = parse_expr lexer in
+          let* _, lexer = expect lexer SEMICOLON in
+          Ok (Parsetree.Let (ident, expr), lexer)
+      | _ -> failwith "parse_statment: Unreachable")
+  | _ ->
+      let* expr, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer SEMICOLON in
+      Ok (Parsetree.Expr expr, lexer)
+
 and parse_program lexer =
-  let* expr, lexer = parse_expr lexer in
-  let* token, _ = Lexer.next_token lexer in
-  if token.ttype <> Token.EOF then
-    Error
-      (Report.make token.loc "Unexpected token. Expecting end of file")
-  else Ok expr
+  let rec aux lexer acc =
+    let* stmt, lexer = parse_statment lexer in
+    let* token, _ = Lexer.next_token lexer in
+    if token.kind <> EOF then aux lexer (stmt :: acc)
+    else Ok (stmt :: acc, lexer)
+  in
+  let* trees, _ = aux lexer [] in
+  Ok (List.rev trees)
 
 and parse lexer = parse_program lexer

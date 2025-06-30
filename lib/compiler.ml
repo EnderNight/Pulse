@@ -1,18 +1,28 @@
-let compile tree =
-  let rec aux tree =
-    match tree with
-    | Parsetree.Int n -> [ Bytecode.PUSH n ]
-    | Parsetree.Plus (lhs, rhs) ->
-        let l = aux lhs and r = aux rhs in
-        Bytecode.ADD :: (l @ r)
-    | Parsetree.Minus (lhs, rhs) ->
-        let l = aux lhs and r = aux rhs in
-        Bytecode.SUB :: (l @ r)
-    | Parsetree.Mult (lhs, rhs) ->
-        let l = aux lhs and r = aux rhs in
-        Bytecode.MULT :: (l @ r)
-    | Parsetree.Div (lhs, rhs) ->
-        let l = aux lhs and r = aux rhs in
-        Bytecode.DIV :: (l @ r)
+let rec compile_expr expr =
+  match expr with
+  | Bindtree.Int n -> [ Bytecode.PUSH n ]
+  | Bindtree.Var (_, id) -> [ Bytecode.LOAD (Int64.of_int id) ]
+  | Bindtree.BinOp (binop, lhs, rhs) ->
+      let l = compile_expr lhs
+      and r = compile_expr rhs
+      and binop_inst =
+        match binop with
+        | Bindtree.Plus -> Bytecode.ADD
+        | Bindtree.Minus -> Bytecode.SUB
+        | Bindtree.Mult -> Bytecode.MULT
+        | Bindtree.Div -> Bytecode.DIV
+      in
+      l @ r @ [ binop_inst ]
+
+and compile_tree tree =
+  match tree with
+  | Bindtree.Let (_, id, expr) ->
+      let e = compile_expr expr in
+      e @ [ Bytecode.STORE (Int64.of_int id) ]
+  | Bindtree.Expr expr -> compile_expr expr
+
+and compile trees variable_pool_count =
+  let instructions =
+    (List.map compile_tree trees |> List.flatten) @ [ Bytecode.HALT ]
   in
-  List.rev (Bytecode.HALT :: aux tree)
+  Bytecode.make variable_pool_count instructions
