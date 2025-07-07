@@ -33,3 +33,4 @@ a.out
 a.pulsebyc
 test.pulse
 *.tar.gz
+.direnv/
