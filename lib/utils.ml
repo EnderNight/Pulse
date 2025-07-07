@@ -1,6 +1,4 @@
-let major = 0
-and minor = 2
-and patch = 0
+let read_file path = In_channel.with_open_text path In_channel.input_all
 
 and any l =
   let rec aux l acc =
