@@ -13,10 +13,16 @@
         packages = with pkgs; [
           ocaml
           dune_3
+        ] ++ (with pkgs.ocamlPackages; [
+          findlib
 
-          ocamlPackages.findlib
-          ocamlPackages.cmdliner
-        ];
+          ocaml-lsp
+          ocamlformat
+          odoc
+          utop
+
+          cmdliner
+        ]);
       };
     };
 }
