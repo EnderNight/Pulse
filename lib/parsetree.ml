@@ -5,10 +5,12 @@ type binop =
   | Div
 
 type expr =
-  | Int of int64 * Location.t
-  | Var of string * Location.t
-  | BinOp of binop * expr * expr * Location.t
+  | Int of int64
+  | Var of string
+  | BinOp of binop * expr * expr
 
-type t =
-  | Let of string * expr * Location.t
-  | Print of expr * Location.t
+type stmt =
+  | Let of string * expr
+  | Print of expr
+
+type program = stmt list

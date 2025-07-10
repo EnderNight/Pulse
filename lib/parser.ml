@@ -33,8 +33,8 @@ and expect_or lexer kinds =
 and parse_primary lexer =
   let* token, lexer = expect_or lexer [ INT ""; IDENT ""; LPAREN ] in
   match token.kind with
-  | INT num -> Ok (Parsetree.Int (Int64.of_string num, token.loc), lexer)
-  | IDENT id -> Ok (Parsetree.Var (id, token.loc), lexer)
+  | INT num -> Ok (Parsetree.Int (Int64.of_string num), lexer)
+  | IDENT id -> Ok (Parsetree.Var id, lexer)
   | _ ->
       let* expr, lexer = parse_expr lexer in
       let* _, lexer = expect lexer RPAREN in
@@ -47,12 +47,10 @@ and parse_factor lexer =
     match token.kind with
     | MULT ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Mult, tree, primary, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Mult, tree, primary))
     | DIV ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Div, tree, primary, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Div, tree, primary))
     | _ -> Ok (tree, lexer)
   in
   aux lexer primary
@@ -64,12 +62,10 @@ and parse_term lexer =
     match token.kind with
     | PLUS ->
         let* factor, lexer = parse_factor next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Plus, tree, factor, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Plus, tree, factor))
     | MINUS ->
         let* factor, lexer = parse_factor next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Minus, tree, factor, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Minus, tree, factor))
     | _ -> Ok (tree, lexer)
   in
   aux lexer factor
@@ -82,15 +78,15 @@ and parse_statment lexer =
   | LET -> (
       let* tokens, lexer = expect_list lexer [ IDENT ""; EQ ] in
       match List.nth tokens 0 with
-      | { kind = IDENT ident; loc } ->
+      | { kind = IDENT ident; _ } ->
           let* expr, lexer = parse_expr lexer in
           let* _, lexer = expect lexer SEMICOLON in
-          Ok (Parsetree.Let (ident, expr, loc), lexer)
+          Ok (Parsetree.Let (ident, expr), lexer)
       | _ -> failwith "parse_statment: Unreachable")
   | _ ->
       let* expr, lexer = parse_expr lexer in
       let* _, lexer = expect lexer SEMICOLON in
-      Ok (Parsetree.Print (expr, token.loc), lexer)
+      Ok (Parsetree.Print expr, lexer)
 
 and parse_program lexer =
   let rec aux lexer acc =
@@ -100,6 +96,6 @@ and parse_program lexer =
     else Ok (stmt :: acc, lexer)
   in
   let* trees, _ = aux lexer [] in
-  Ok (List.rev trees)
+  Ok (List.rev trees : Parsetree.program)
 
 and parse lexer = parse_program lexer

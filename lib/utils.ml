@@ -5,3 +5,5 @@ and any l =
     match l with [] -> acc | e :: tl -> aux tl (e || acc)
   in
   aux l false
+
+and not_impl fname = failwith (fname ^ ": not implemented")

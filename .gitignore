@@ -32,5 +32,6 @@ _opam/
 a.out
 a.pulsebyc
 test.pulse
+*.pulsir
 *.tar.gz
 .direnv/
