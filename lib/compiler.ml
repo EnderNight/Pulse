@@ -1,30 +1,59 @@
-let rec compile_expr expr =
+let bytecode_of_binop = function
+  | Bindtree.Plus -> Bytecode.ADD
+  | Bindtree.Minus -> Bytecode.SUB
+  | Bindtree.Mult -> Bytecode.MULT
+  | Bindtree.Div -> Bytecode.DIV
+  | Bindtree.Mod -> Bytecode.MOD
+  | Bindtree.Eq -> Bytecode.CEQ
+  | Bindtree.Neq -> Bytecode.CNE
+  | Bindtree.Lt -> Bytecode.CLT
+  | Bindtree.Le -> Bytecode.CLE
+  | Bindtree.Gt -> Bytecode.CGT
+  | Bindtree.Ge -> Bytecode.CGE
+
+let rec compile_expr expr addr =
   match expr with
-  | Bindtree.Int (n, _) -> [ Bytecode.PUSH n ]
-  | Bindtree.Var (_, id, _) -> [ Bytecode.LOAD id ]
-  | Bindtree.BinOp (binop, lhs, rhs, _) ->
-      let l = compile_expr lhs
-      and r = compile_expr rhs
-      and binop_inst =
-        match binop with
-        | Bindtree.Plus -> Bytecode.ADD
-        | Bindtree.Minus -> Bytecode.SUB
-        | Bindtree.Mult -> Bytecode.MULT
-        | Bindtree.Div -> Bytecode.DIV
-      in
-      l @ r @ [ binop_inst ]
+  | Bindtree.Int (n, _) -> ([ Bytecode.PUSH n ], addr + 1)
+  | Bindtree.Var (_, id, _) -> ([ Bytecode.LOAD id ], addr + 1)
+  | Bindtree.BinOp (op, lhs, rhs, _) ->
+      let op = bytecode_of_binop op in
+      let l, addr = compile_expr lhs addr in
+      let r, addr = compile_expr rhs addr in
+      (l @ r @ [ op ], addr + 1)
 
-and compile_tree tree =
-  match tree with
+let rec compile_stmt stmt addr =
+  match stmt with
   | Bindtree.Let (_, id, expr, _) ->
-      let e = compile_expr expr in
-      e @ [ Bytecode.STORE id ]
+      let expr, addr = compile_expr expr addr in
+      (expr @ [ Bytecode.STORE id ], addr + 1)
   | Bindtree.Print (expr, _) ->
-      let e = compile_expr expr in
-      e @ [ Bytecode.PRINT ]
+      let expr, addr = compile_expr expr addr in
+      (expr @ [ Bytecode.PRINT ], addr + 1)
+  | Bindtree.IfElse (cond, btrue, bfalse, _) ->
+      let cond, jaddr = compile_expr cond addr in
+      let bfalse, taddr =
+        match bfalse with
+        | None -> ([], jaddr + 2)
+        | Some stmts ->
+            let bfalse, taddr = compile_stmts stmts (jaddr + 1) in
+            (bfalse, taddr + 1)
+      in
+      let btrue, eaddr = compile_stmts btrue taddr in
+      ( cond
+        @ [ Bytecode.JNZ (Int64.of_int taddr) ]
+        @ bfalse
+        @ [ Bytecode.JMP (Int64.of_int eaddr) ]
+        @ btrue,
+        eaddr )
 
-and compile trees variable_pool_count =
-  let instructions =
-    (List.map compile_tree trees |> List.flatten) @ [ Bytecode.HALT ]
-  in
-  Bytecode.make variable_pool_count instructions
+and compile_stmts stmts addr =
+  match stmts with
+  | [] -> ([], addr)
+  | stmt :: tl ->
+      let code, addr = compile_stmt stmt addr in
+      let r, addr = compile_stmts tl addr in
+      (code @ r, addr)
+
+let compile program vpc =
+  let insts, _ = compile_stmts program 0 in
+  Bytecode.make vpc (insts @ [ Bytecode.HALT ])

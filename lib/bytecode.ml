@@ -11,10 +11,19 @@ type instruction =
   | ADD
   | SUB
   | MULT
+  | MOD
   | DIV
   | LOAD of int
   | STORE of int
   | PRINT
+  | JMP of int64
+  | JNZ of int64
+  | CEQ
+  | CNE
+  | CLT
+  | CLE
+  | CGT
+  | CGE
 
 type t = {
   header : header;
@@ -22,7 +31,7 @@ type t = {
 }
 
 let rec header_make variable_pool_count =
-  let open Utils in
+  let open Version in
   { major; minor; patch; variable_pool_count }
 
 and make variable_pool_count instructions =
@@ -37,15 +46,24 @@ and int_of_instruction inst =
   | SUB -> 0x3
   | MULT -> 0x4
   | DIV -> 0x5
-  | LOAD _ -> 0x6
-  | STORE _ -> 0x7
-  | PRINT -> 0x8
+  | MOD -> 0x6
+  | LOAD _ -> 0x7
+  | STORE _ -> 0x8
+  | PRINT -> 0x9
+  | JMP _ -> 0xa
+  | JNZ _ -> 0xb
+  | CEQ -> 0xc
+  | CNE -> 0xd
+  | CLT -> 0xe
+  | CLE -> 0xf
+  | CGT -> 0x10
+  | CGE -> 0x11
 
 and bytes_of_instruction inst =
   let code = int_of_instruction inst
   and bytes =
     match inst with
-    | PUSH n ->
+    | PUSH n | JMP n | JNZ n ->
         let byte = Bytes.create 9 in
         Bytes.set_int64_be byte 1 n;
         byte
@@ -66,9 +84,18 @@ and string_of_instruction inst =
   | SUB -> "SUB"
   | MULT -> "MULT"
   | DIV -> "DIV"
+  | MOD -> "MOD"
   | LOAD id -> "LOAD " ^ string_of_int id
   | STORE id -> "STORE " ^ string_of_int id
   | PRINT -> "PRINT"
+  | JMP addr -> "JMP " ^ Int64.to_string addr
+  | JNZ addr -> "JNZ " ^ Int64.to_string addr
+  | CEQ -> "CEQ"
+  | CNE -> "CNE"
+  | CLT -> "CLT"
+  | CLE -> "CLE"
+  | CGT -> "CGT"
+  | CGE -> "CGE"
 
 and instruction_of_int code =
   match code with
@@ -78,9 +105,18 @@ and instruction_of_int code =
   | 0x3 -> SUB
   | 0x4 -> MULT
   | 0x5 -> DIV
-  | 0x6 -> LOAD 0
-  | 0x7 -> STORE 0
-  | 0x8 -> PRINT
+  | 0x6 -> MOD
+  | 0x7 -> LOAD 0
+  | 0x8 -> STORE 0
+  | 0x9 -> PRINT
+  | 0xa -> JMP Int64.zero
+  | 0xb -> JNZ Int64.zero
+  | 0xc -> CEQ
+  | 0xd -> CNE
+  | 0xe -> CLT
+  | 0xf -> CLE
+  | 0x10 -> CGT
+  | 0x11 -> CGE
   | _ -> failwith "Unknown code"
 
 and show_header header =
@@ -92,13 +128,16 @@ and show_header header =
     ^ "."
     ^ string_of_int header.patch
   in
-  "Pulse " ^ version ^ "\n" ^ "Variable pool count: "
+  "Pulse - compiled version: " ^ version ^ "\n" ^ "Variable pool count: "
   ^ string_of_int header.variable_pool_count
   ^ "\n"
 
-and show_instructions = function
-  | [] -> ""
-  | inst :: tl -> string_of_instruction inst ^ "\n" ^ show_instructions tl
+and show_instructions insts =
+  List.mapi
+    (fun idx inst ->
+      string_of_int idx ^ ":\t" ^ string_of_instruction inst)
+    insts
+  |> String.concat "\n"
 
 and show bytecode =
   show_header bytecode.header
@@ -145,7 +184,7 @@ and read_instructions_from_file file =
           read_int (n - 1) Int64.(logor (shift_left acc 8) (of_int c))
   in
   let read_int64 () = read_int 8 Int64.zero
-  and read_uin16 () = read_int 2 Int64.zero in
+  and read_uint16 () = read_int 2 Int64.zero in
   let rec aux acc =
     match In_channel.input_byte file with
     | Some code -> (
@@ -155,11 +194,17 @@ and read_instructions_from_file file =
             let num = read_int64 () in
             aux (PUSH num :: acc)
         | LOAD _ ->
-            let num = read_uin16 () in
+            let num = read_uint16 () in
             aux (LOAD (Int64.to_int num) :: acc)
         | STORE _ ->
-            let num = read_uin16 () in
+            let num = read_uint16 () in
             aux (STORE (Int64.to_int num) :: acc)
+        | JMP _ ->
+            let addr = read_int64 () in
+            aux (JMP addr :: acc)
+        | JNZ _ ->
+            let addr = read_int64 () in
+            aux (JNZ addr :: acc)
         | _ -> aux (inst :: acc))
     | _ -> acc
   in

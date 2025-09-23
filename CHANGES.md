@@ -5,6 +5,23 @@ All notable changes to this project is documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- New `%` operand:
+    - Get the remainder of an euclidian division.
+    - New `MOD` instruction.
+- New `==`, `!=`, `<`, `<=`, `>`, `>=` operands:
+    - Compare two numbers.
+    - New `Cxx` comparison instruction family.
+- Support for `if - else` conditions:
+    - New `JMP` and `JNZ` instructions for (un)conditional jumps.
+
+### Changed
+
+- docs/instructions.md instruction description for easier reading.
+
 ## [0.2.0] - 2025-06-30
 
 ### Added

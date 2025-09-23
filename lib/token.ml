@@ -7,14 +7,25 @@ type token_kind =
   | MINUS
   | MULT
   | DIV
+  | MOD
   | EQ
+  | DEQ
+  | NEQ
+  | LT
+  | LE
+  | GT
+  | GE
   (* Punctuators *)
   | LPAREN
   | RPAREN
+  | LBRACK
+  | RBRACK
   | SEMICOLON
   (* Keywords *)
   | LET
   | PRINT
+  | IF
+  | ELSE
   (* Misc *)
   | EOF
 
@@ -32,17 +43,30 @@ and name_of_token_kind = function
   | MINUS -> "minus sign"
   | MULT -> "multiplication sign"
   | DIV -> "division sign"
+  | MOD -> "reminder sign"
   | EQ -> "equal sign"
+  | DEQ -> "double equal sign"
+  | NEQ -> "not equal sign"
+  | LT -> "less than sign"
+  | LE -> "less than or equal sign"
+  | GT -> "greater than sign"
+  | GE -> "greater than or equal sign"
   | LPAREN -> "left parenthesis"
   | RPAREN -> "right parenthesis"
+  | LBRACK -> "left bracket"
+  | RBRACK -> "right bracket"
   | SEMICOLON -> "semicolon"
   | LET -> "'let'"
   | PRINT -> "'print'"
+  | IF -> "'if'"
+  | ELSE -> "'else'"
   | EOF -> "end of file"
 
 and keyword_of_string_opt = function
   | "let" -> Some LET
   | "print" -> Some PRINT
+  | "if" -> Some IF
+  | "else" -> Some ELSE
   | _ -> None
 
 and token_kind_loose_equal t1 t2 =

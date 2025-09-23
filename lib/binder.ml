@@ -18,11 +18,18 @@ let rec bind_expr expr env =
         | Parsetree.Minus -> Bindtree.Minus
         | Parsetree.Mult -> Bindtree.Mult
         | Parsetree.Div -> Bindtree.Div
+        | Parsetree.Mod -> Bindtree.Mod
+        | Parsetree.Eq -> Bindtree.Eq
+        | Parsetree.Neq -> Bindtree.Neq
+        | Parsetree.Lt -> Bindtree.Lt
+        | Parsetree.Le -> Bindtree.Le
+        | Parsetree.Gt -> Bindtree.Gt
+        | Parsetree.Ge -> Bindtree.Ge
       in
       Ok (Bindtree.BinOp (binop_inst, l, r, loc))
 
-and bind_tree tree env acc =
-  match tree with
+and bind_statement stmt env acc =
+  match stmt with
   | Parsetree.Let (ident, expr, loc) ->
       Hashtbl.add env ident acc;
       let* expr = bind_expr expr env in
@@ -30,14 +37,25 @@ and bind_tree tree env acc =
   | Parsetree.Print (expr, loc) ->
       let* expr = bind_expr expr env in
       Ok (Bindtree.Print (expr, loc), acc)
+  | Parsetree.IfElse (cond, btrue, bfalse, loc) -> (
+      let* cond = bind_expr cond env in
+      let* btrue, acc = bind_statements btrue env acc in
+      match bfalse with
+      | None -> Ok (Bindtree.IfElse (cond, btrue, None, loc), acc)
+      | Some bfalse ->
+          let* bfalse, acc = bind_statements bfalse env acc in
+          Ok (Bindtree.IfElse (cond, btrue, Some bfalse, loc), acc))
 
-and bind trees =
-  let env = Hashtbl.create 8 in
-  let rec aux trees id acc =
-    match trees with
+and bind_statements stmts env acc =
+  let rec aux stmts id acc =
+    match stmts with
     | [] -> Ok (List.rev acc, id)
     | tree :: tl ->
-        let* tree, id = bind_tree tree env id in
+        let* tree, id = bind_statement tree env id in
         aux tl id (tree :: acc)
   in
-  aux trees 0 []
+  aux stmts acc []
+
+and bind program =
+  let env = Hashtbl.create 8 in
+  bind_statements program env 0

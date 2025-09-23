@@ -53,6 +53,10 @@ and parse_factor lexer =
         let* primary, lexer = parse_primary next_lexer in
         aux lexer
           (Parsetree.BinOp (Parsetree.Div, tree, primary, token.loc))
+    | MOD ->
+        let* primary, lexer = parse_primary next_lexer in
+        aux lexer
+          (Parsetree.BinOp (Parsetree.Mod, tree, primary, token.loc))
     | _ -> Ok (tree, lexer)
   in
   aux lexer primary
@@ -74,10 +78,46 @@ and parse_term lexer =
   in
   aux lexer factor
 
-and parse_expr lexer = parse_term lexer
+and parse_relation lexer =
+  let* term, lexer = parse_term lexer in
+  let rec aux lexer tree =
+    let* token, next_lexer = Lexer.next_token lexer in
+    match token.kind with
+    | LT ->
+        let* term, lexer = parse_term next_lexer in
+        aux lexer (Parsetree.BinOp (Parsetree.Lt, tree, term, token.loc))
+    | LE ->
+        let* term, lexer = parse_term next_lexer in
+        aux lexer (Parsetree.BinOp (Parsetree.Le, tree, term, token.loc))
+    | GT ->
+        let* term, lexer = parse_term next_lexer in
+        aux lexer (Parsetree.BinOp (Parsetree.Gt, tree, term, token.loc))
+    | GE ->
+        let* term, lexer = parse_term next_lexer in
+        aux lexer (Parsetree.BinOp (Parsetree.Ge, tree, term, token.loc))
+    | _ -> Ok (tree, lexer)
+  in
+  aux lexer term
+
+and parse_equal lexer =
+  let* rela, lexer = parse_relation lexer in
+  let rec aux lexer tree =
+    let* token, next_lexer = Lexer.next_token lexer in
+    match token.kind with
+    | DEQ ->
+        let* rela, lexer = parse_relation next_lexer in
+        aux lexer (Parsetree.BinOp (Parsetree.Eq, tree, rela, token.loc))
+    | NEQ ->
+        let* rela, lexer = parse_relation next_lexer in
+        aux lexer (Parsetree.BinOp (Parsetree.Neq, tree, rela, token.loc))
+    | _ -> Ok (tree, lexer)
+  in
+  aux lexer rela
+
+and parse_expr lexer = parse_equal lexer
 
 and parse_statment lexer =
-  let* token, lexer = expect_or lexer [ LET; PRINT ] in
+  let* token, lexer = expect_or lexer [ LET; PRINT; IF ] in
   match token.kind with
   | LET -> (
       let* tokens, lexer = expect_list lexer [ IDENT ""; EQ ] in
@@ -87,10 +127,32 @@ and parse_statment lexer =
           let* _, lexer = expect lexer SEMICOLON in
           Ok (Parsetree.Let (ident, expr, loc), lexer)
       | _ -> failwith "parse_statment: Unreachable")
-  | _ ->
+  | PRINT ->
       let* expr, lexer = parse_expr lexer in
       let* _, lexer = expect lexer SEMICOLON in
       Ok (Parsetree.Print (expr, token.loc), lexer)
+  | IF ->
+      let* _, lexer = expect lexer LPAREN in
+      let* cond, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer RPAREN in
+      let* btrue, lexer = parse_statment_block lexer in
+      let* else_token, next_lexer = Lexer.next_token lexer in
+      if else_token.kind = ELSE then
+        let* bfalse, lexer = parse_statment_block next_lexer in
+        Ok (Parsetree.IfElse (cond, btrue, Some bfalse, token.loc), lexer)
+      else Ok (Parsetree.IfElse (cond, btrue, None, token.loc), lexer)
+  | _ -> failwith "parse_statment: Unexpected token"
+
+and parse_statment_block lexer =
+  let rec aux lexer acc =
+    let* stmt, lexer = parse_statment lexer in
+    let* token, next_lexer = Lexer.next_token lexer in
+    if token.kind = RBRACK then Ok (stmt :: acc, next_lexer)
+    else aux lexer (stmt :: acc)
+  in
+  let* _, lexer = expect lexer LBRACK in
+  let* trees, lexer = aux lexer [] in
+  Ok (List.rev trees, lexer)
 
 and parse_program lexer =
   let rec aux lexer acc =

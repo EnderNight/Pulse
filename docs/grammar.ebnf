@@ -1,13 +1,26 @@
 program =
-  | statment+ EOF ;
+  | statement+ EOF ;
 
-statment =
+statement =
   | "let" IDENT "=" expr ";"
   | "print" expr ";"
+  | "if" "(" epxr ")" "{" statement* "}" [else_stmt]
+  ;
+
+else_stmt =
+  | "else" "{" statement* "}"
   ;
 
 expr =
-  | term
+  | relation
+  ;
+
+equal =
+  | relation ( ("==" | "!=") relation )*
+  ;
+
+relation =
+  | term ( ("<" | "<=" | ">" | ">=") term )*
   ;
 
 term =
@@ -15,7 +28,7 @@ term =
   ;
 
 factor =
-  | primary ( ("*" | "/") primary )*
+  | primary ( ("*" | "/" | "%") primary )*
   ;
 
 primary =

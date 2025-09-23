@@ -73,10 +73,30 @@ and next_token lexer =
         | '-' -> Ok (Token.MINUS, next_lexer)
         | '*' -> Ok (Token.MULT, next_lexer)
         | '/' -> Ok (Token.DIV, next_lexer)
+        | '%' -> Ok (Token.MOD, next_lexer)
         | '(' -> Ok (Token.LPAREN, next_lexer)
         | ')' -> Ok (Token.RPAREN, next_lexer)
+        | '{' -> Ok (Token.LBRACK, next_lexer)
+        | '}' -> Ok (Token.RBRACK, next_lexer)
         | ';' -> Ok (Token.SEMICOLON, next_lexer)
-        | '=' -> Ok (Token.EQ, next_lexer)
+        | '=' -> (
+            match next_char next_lexer with
+            | Some '=', next_lexer -> Ok (Token.DEQ, next_lexer)
+            | _ -> Ok (Token.EQ, next_lexer))
+        | '!' -> (
+            match next_char next_lexer with
+            | Some '=', next_lexer -> Ok (Token.NEQ, next_lexer)
+            | _ ->
+                let msg = "unknown character '" ^ String.make 1 c ^ "'" in
+                Error (Report.make_loc loc msg))
+        | '<' -> (
+            match next_char next_lexer with
+            | Some '=', next_lexer -> Ok (Token.LE, next_lexer)
+            | _ -> Ok (Token.LT, next_lexer))
+        | '>' -> (
+            match next_char next_lexer with
+            | Some '=', next_lexer -> Ok (Token.GE, next_lexer)
+            | _ -> Ok (Token.GT, next_lexer))
         | '0' .. '9' ->
             let num, next_lexer = lex_number lexer in
             Ok (Token.INT num, next_lexer)
