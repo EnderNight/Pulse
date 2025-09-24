@@ -47,6 +47,12 @@ let exec (bytecode : Bytecode.t) =
             Int64.to_int a |> Char.chr |> print_char;
             aux insts next_idx stl var_pool
         | _ -> Error (Report.make "Not engough arguements"))
+    | Bytecode.PRINT_INT -> (
+        match stack with
+        | a :: stl ->
+            Int64.to_string a |> print_string;
+            aux insts next_idx stl var_pool
+        | _ -> Error (Report.make "Not engough arguements"))
     | Bytecode.JMP addr -> aux insts (Int64.to_int addr) stack var_pool
     | Bytecode.JNZ addr -> (
         match stack with

@@ -24,8 +24,10 @@ type token_kind =
   (* Keywords *)
   | LET
   | PRINT
+  | PRINT_INT
   | IF
   | ELSE
+  | WHILE
   (* Misc *)
   | EOF
 
@@ -58,15 +60,19 @@ and name_of_token_kind = function
   | SEMICOLON -> "semicolon"
   | LET -> "'let'"
   | PRINT -> "'print'"
+  | PRINT_INT -> "'print_int'"
   | IF -> "'if'"
   | ELSE -> "'else'"
+  | WHILE -> "'while'"
   | EOF -> "end of file"
 
 and keyword_of_string_opt = function
   | "let" -> Some LET
   | "print" -> Some PRINT
+  | "print_int" -> Some PRINT_INT
   | "if" -> Some IF
   | "else" -> Some ELSE
+  | "while" -> Some WHILE
   | _ -> None
 
 and token_kind_loose_equal t1 t2 =

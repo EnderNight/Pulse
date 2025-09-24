@@ -29,6 +29,12 @@ let rec compile_stmt stmt addr =
   | Bindtree.Print (expr, _) ->
       let expr, addr = compile_expr expr addr in
       (expr @ [ Bytecode.PRINT ], addr + 1)
+  | Bindtree.PrintInt (expr, _) ->
+      let expr, addr = compile_expr expr addr in
+      (expr @ [ Bytecode.PRINT_INT ], addr + 1)
+  | Bindtree.Assign (_, id, expr, _) ->
+      let expr, addr = compile_expr expr addr in
+      (expr @ [ Bytecode.STORE id ], addr + 1)
   | Bindtree.IfElse (cond, btrue, bfalse, _) ->
       let cond, jaddr = compile_expr cond addr in
       let bfalse, taddr =
@@ -44,6 +50,19 @@ let rec compile_stmt stmt addr =
         @ bfalse
         @ [ Bytecode.JMP (Int64.of_int eaddr) ]
         @ btrue,
+        eaddr )
+  | Bindtree.While (cond, body, _) ->
+      let cond, jaddr = compile_expr cond addr in
+      let taddr = jaddr + 2 in
+      let body, eaddr = compile_stmts body taddr in
+      let eaddr = eaddr + 1 in
+      ( cond
+        @ [
+            Bytecode.JNZ (Int64.of_int taddr);
+            Bytecode.JMP (Int64.of_int eaddr);
+          ]
+        @ body
+        @ [ Bytecode.JMP (Int64.of_int addr) ],
         eaddr )
 
 and compile_stmts stmts addr =

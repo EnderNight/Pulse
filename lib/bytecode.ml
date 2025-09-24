@@ -24,6 +24,7 @@ type instruction =
   | CLE
   | CGT
   | CGE
+  | PRINT_INT
 
 type t = {
   header : header;
@@ -58,6 +59,7 @@ and int_of_instruction inst =
   | CLE -> 0xf
   | CGT -> 0x10
   | CGE -> 0x11
+  | PRINT_INT -> 0x12
 
 and bytes_of_instruction inst =
   let code = int_of_instruction inst
@@ -96,6 +98,7 @@ and string_of_instruction inst =
   | CLE -> "CLE"
   | CGT -> "CGT"
   | CGE -> "CGE"
+  | PRINT_INT -> "PRINT_INT"
 
 and instruction_of_int code =
   match code with
@@ -117,6 +120,7 @@ and instruction_of_int code =
   | 0xf -> CLE
   | 0x10 -> CGT
   | 0x11 -> CGE
+  | 0x12 -> PRINT_INT
   | _ -> failwith "Unknown code"
 
 and show_header header =

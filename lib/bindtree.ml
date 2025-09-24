@@ -19,6 +19,9 @@ type expr =
 type statement =
   | Let of string * int * expr * Location.t
   | Print of expr * Location.t
+  | PrintInt of expr * Location.t
+  | Assign of string * int * expr * Location.t
   | IfElse of expr * statement list * statement list option * Location.t
+  | While of expr * statement list * Location.t
 
 type program = statement list

@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - New `Cxx` comparison instruction family.
 - Support for `if - else` conditions:
     - New `JMP` and `JNZ` instructions for (un)conditional jumps.
+- Support for `while` loops.
+- New assignation `=` expression:
+    - Assign new values to variables.
 
 ### Changed
 

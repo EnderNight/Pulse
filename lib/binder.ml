@@ -37,6 +37,16 @@ and bind_statement stmt env acc =
   | Parsetree.Print (expr, loc) ->
       let* expr = bind_expr expr env in
       Ok (Bindtree.Print (expr, loc), acc)
+  | Parsetree.PrintInt (expr, loc) ->
+      let* expr = bind_expr expr env in
+      Ok (Bindtree.PrintInt (expr, loc), acc)
+  | Parsetree.Assign (ident, expr, loc) -> (
+      let* expr = bind_expr expr env in
+      match Hashtbl.find_opt env ident with
+      | None ->
+          Error
+            (Report.make_loc loc ("undeclared variable '" ^ ident ^ "'."))
+      | Some id -> Ok (Bindtree.Assign (ident, id, expr, loc), acc))
   | Parsetree.IfElse (cond, btrue, bfalse, loc) -> (
       let* cond = bind_expr cond env in
       let* btrue, acc = bind_statements btrue env acc in
@@ -45,6 +55,10 @@ and bind_statement stmt env acc =
       | Some bfalse ->
           let* bfalse, acc = bind_statements bfalse env acc in
           Ok (Bindtree.IfElse (cond, btrue, Some bfalse, loc), acc))
+  | Parsetree.While (cond, body, loc) ->
+      let* cond = bind_expr cond env in
+      let* body, acc = bind_statements body env acc in
+      Ok (Bindtree.While (cond, body, loc), acc)
 
 and bind_statements stmts env acc =
   let rec aux stmts id acc =

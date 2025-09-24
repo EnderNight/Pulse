@@ -117,7 +117,9 @@ and parse_equal lexer =
 and parse_expr lexer = parse_equal lexer
 
 and parse_statment lexer =
-  let* token, lexer = expect_or lexer [ LET; PRINT; IF ] in
+  let* token, lexer =
+    expect_or lexer [ LET; PRINT; PRINT_INT; IDENT ""; IF; WHILE ]
+  in
   match token.kind with
   | LET -> (
       let* tokens, lexer = expect_list lexer [ IDENT ""; EQ ] in
@@ -131,6 +133,15 @@ and parse_statment lexer =
       let* expr, lexer = parse_expr lexer in
       let* _, lexer = expect lexer SEMICOLON in
       Ok (Parsetree.Print (expr, token.loc), lexer)
+  | PRINT_INT ->
+      let* expr, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer SEMICOLON in
+      Ok (Parsetree.PrintInt (expr, token.loc), lexer)
+  | IDENT id ->
+      let* _, lexer = expect lexer EQ in
+      let* expr, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer SEMICOLON in
+      Ok (Parsetree.Assign (id, expr, token.loc), lexer)
   | IF ->
       let* _, lexer = expect lexer LPAREN in
       let* cond, lexer = parse_expr lexer in
@@ -141,6 +152,12 @@ and parse_statment lexer =
         let* bfalse, lexer = parse_statment_block next_lexer in
         Ok (Parsetree.IfElse (cond, btrue, Some bfalse, token.loc), lexer)
       else Ok (Parsetree.IfElse (cond, btrue, None, token.loc), lexer)
+  | WHILE ->
+      let* _, lexer = expect lexer LPAREN in
+      let* cond, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer RPAREN in
+      let* body, lexer = parse_statment_block lexer in
+      Ok (Parsetree.While (cond, body, token.loc), lexer)
   | _ -> failwith "parse_statment: Unexpected token"
 
 and parse_statment_block lexer =

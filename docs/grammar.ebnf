@@ -4,11 +4,18 @@ program =
 statement =
   | "let" IDENT "=" expr ";"
   | "print" expr ";"
-  | "if" "(" epxr ")" "{" statement* "}" [else_stmt]
+  | "print_int" expr ";"
+  | IDENT "=" expr ";"
+  | "if" "(" epxr ")" stmt_block [else_stmt]
+  | "while" "(" expr ")" stmt_block
   ;
 
 else_stmt =
-  | "else" "{" statement* "}"
+  | "else" stmt_block
+  ;
+
+stmt_block =
+  | "{" statement* "}"
   ;
 
 expr =
