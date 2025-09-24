@@ -5,7 +5,7 @@ All notable changes to this project is documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2025-09-24
 
 ### Added
 
@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for `while` loops.
 - New assignation `=` expression:
     - Assign new values to variables.
+- New `print_int` command and `PRINT_INT` instruction:
+    - print numbers directly
 
 ### Changed
 
