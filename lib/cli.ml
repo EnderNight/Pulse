@@ -52,12 +52,15 @@ let pipeline_run_stage pipeline =
       let ret = Sys.command qbe_cmd in
       if ret = 0 then Ok (Some Assembler) else Error ret
   | Assembler ->
-      let outfile_s = pipeline.outfile ^ ".s" in
-      let as_cmd = "gcc " ^ outfile_s ^ " -o " ^ pipeline.outfile in
-      let as_cmd =
+      let outfile_s = pipeline.outfile ^ ".s"
+      and runtime_path =
         match Sys.getenv_opt "PULSE_RUNTIMEDIR" with
-        | None -> as_cmd
-        | Some var -> as_cmd ^ " -L" ^ var ^ " -lpulsert"
+        | None -> ""
+        | Some var -> "-L" ^ var
+      in
+      let as_cmd =
+        "gcc " ^ outfile_s ^ " -o " ^ pipeline.outfile ^ " " ^ runtime_path
+        ^ " -lpulsert"
       in
       let ret = Sys.command as_cmd in
       if ret = 0 then Ok None else Error ret
