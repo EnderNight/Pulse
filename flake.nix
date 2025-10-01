@@ -10,18 +10,18 @@
     in {
       devShells.${system}.default = pkgs.mkShell {
         name = "pulse";
-        packages = with pkgs; [
+        packages = (with pkgs; [
           ocaml
           dune_3
-        ] ++ (with pkgs.ocamlPackages; [
+
+          qbe
+        ]) ++ (with pkgs.ocamlPackages; [
           findlib
 
           ocaml-lsp
           ocamlformat
           odoc
           utop
-
-          cmdliner
         ]);
       };
     };

@@ -2,15 +2,18 @@
 
 Simple programming language.
 
-As of now, it is a simple calculator.
+OCaml frontend, [QBE](https://c9x.me/compile/) backend.
 
-- See [features.md](docs/features.md) for a description of each features.
-- See [cli.md](docs/cli.md) for help on the cli.
-- See [vm_and_bytecode.md](docs/vm_and_bytecode.md) for a description of the VM and the bytecode.
+Only for x86_64-linux.
 
-# TODO
+## Usage
 
-- If else support
-- While loops
-- Functions
-- Unit/functional tests
+```sh
+pulse INPUT_FILE.pulse OUTPUT_EXE
+```
+
+where:
+- `INPUT_FILE.pulse` is the source file name.
+- `OUTPUT_EXE` is the name of the final executable.
+
+The `PULSE_RUNTIMEDIR` env variable, which points to the directory containing the Pulse runtime (defaults to `/usr/lib`), can be overwritten.

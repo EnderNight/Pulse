@@ -4,8 +4,8 @@ type t = {
   loc : Location.t;
 }
 
-let rec make source program =
-  let loc = Location.make source in
+let rec make file_name program =
+  let loc = Location.make file_name in
   { program; pos = 0; loc }
 
 and is_whitespace = function ' ' | '\t' | '\n' -> true | _ -> false
@@ -18,8 +18,8 @@ and is_identifier = function
 
 and is_identifier_idx c idx =
   match c with
-  | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
-  | '0' .. '9' when idx <> 0 -> true
+  | 'a' .. 'z' | 'A' .. 'Z' -> true
+  | ('0' .. '9' | '_') when idx <> 0 -> true
   | _ -> false
 
 and next_char lexer =

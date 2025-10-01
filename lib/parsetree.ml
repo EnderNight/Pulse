@@ -24,4 +24,4 @@ type statement =
   | IfElse of expr * statement list * statement list option * Location.t
   | While of expr * statement list * Location.t
 
-type t = statement list
+type program = statement list

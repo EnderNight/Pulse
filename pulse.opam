@@ -13,7 +13,6 @@ bug-reports: "https://github.com/EnderNight/Pulse/issues"
 depends: [
   "dune" {>= "3.19"}
   "ocaml" {>= "5.3"}
-  "cmdliner" {>= "1.3"}
   "odoc" {with-doc}
 ]
 build: [

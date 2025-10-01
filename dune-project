@@ -23,8 +23,6 @@
  (description "Simple programming language")
  (depends
   (ocaml
-   (>= 5.3))
-  (cmdliner
-   (>= 1.3)))
+   (>= 5.3)))
  (tags
   (programming language)))

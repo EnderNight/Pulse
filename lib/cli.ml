@@ -1,78 +1,37 @@
 let ( let* ) = Result.bind
 
-let exec input_file =
-  Result.fold
-    ~ok:(fun _ -> 0)
-    ~error:(fun report ->
-      Report.show report |> print_endline;
-      1)
-    (let* trees =
-       Io.read_file input_file |> Lexer.make input_file |> Parser.parse
-     in
-     let* bound_trees, vpc = Binder.bind trees in
-     Compiler.compile bound_trees vpc |> Vm.exec)
-
-and compile input_file output_file =
-  Result.fold
-    ~ok:(fun _ -> 0)
-    ~error:(fun report ->
-      Report.show report |> print_endline;
-      1)
-    (let* trees =
-       Io.read_file input_file |> Lexer.make input_file |> Parser.parse
-     in
-     let* bound_trees, vpc = Binder.bind trees in
-     let bytecode = Compiler.compile bound_trees vpc in
-     Ok
-       (Out_channel.with_open_bin output_file
-          (Bytecode.write_to_file bytecode)))
-
-and run input_file =
-  Result.fold
-    ~ok:(fun _ -> 0)
-    ~error:(fun report ->
-      Report.show report |> print_endline;
-      1)
-    (In_channel.with_open_bin input_file Bytecode.read_from_file
-    |> Vm.exec)
-
-and disasm input_file =
-  In_channel.with_open_bin input_file Bytecode.read_from_file
-  |> Bytecode.show |> print_endline;
-  0
-
-open Cmdliner
-
-let rec exec_cmd =
-  let input_file = Arg.(required & pos 0 (some string) None & info []) in
-  let exec_t = Term.(const exec $ input_file) in
-  let info = Cmd.info "exec" in
-  Cmd.v info exec_t
-
-and compile_cmd =
-  let input_file = Arg.(required & pos 0 (some string) None & info [])
-  and output_file =
-    Arg.(value & opt string "a.pulsebyc" & info [ "o" ])
+let compile input_file output_file =
+  let result =
+    let* prog =
+      Utils.read_file input_file |> Lexer.make input_file |> Parser.parse
+    in
+    let ir_str = Codegen.gen_program prog |> Qbe.show_program
+    and out_ssa = output_file ^ ".ssa"
+    and out_s = output_file ^ ".s"
+    and out_o = output_file ^ ".o" in
+    let runtime_path =
+      Option.value (Sys.getenv_opt "PULSE_RUNTIMEDIR") ~default:"/usr/lib"
+    in
+    let qbe_cmd = "qbe " ^ out_ssa ^ " -o " ^ out_s
+    and as_cmd = "as " ^ out_s ^ " -o " ^ out_o
+    and ld_cmd =
+      "ld " ^ out_o ^ " -o " ^ output_file ^ " -L" ^ runtime_path ^ " -lpulsert"
+    in
+    Utils.write_file out_ssa ir_str;
+    let qbe_out = Sys.command qbe_cmd in
+    let as_out = Sys.command as_cmd in
+    let ld_out = Sys.command ld_cmd in
+    (* idc, it's funny *)
+    Ok (qbe_out + as_out + ld_out)
   in
-  let compile_t = Term.(const compile $ input_file $ output_file) in
-  let info = Cmd.info "compile" in
-  Cmd.v info compile_t
+  match result with
+  | Error report ->
+      Report.show report |> prerr_endline;
+      1
+  | Ok r -> r
 
-and run_cmd =
-  let input_file = Arg.(required & pos 0 (some string) None & info []) in
-  let run_t = Term.(const run $ input_file) in
-  let info = Cmd.info "run" in
-  Cmd.v info run_t
-
-and disasm_cmd =
-  let input_file = Arg.(required & pos 0 (some string) None & info []) in
-  let disasm_t = Term.(const disasm $ input_file) in
-  let info = Cmd.info "disasm" in
-  Cmd.v info disasm_t
-
-and main () =
-  let info = Cmd.info "pulse" ~version:Version.version in
-  let cmd =
-    Cmd.group info [ exec_cmd; compile_cmd; run_cmd; disasm_cmd ]
-  in
-  Cmd.eval' cmd
+let main argc argv =
+  if argc <> 3 then (
+    prerr_endline "Invalid number of arguments";
+    1)
+  else compile argv.(1) argv.(2)

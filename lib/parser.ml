@@ -7,8 +7,7 @@ let rec expect lexer kind =
   if token_kind_loose_equal token.kind kind then Ok (token, lexer)
   else
     Error
-      (Report.make_loc token.loc
-         ("expected " ^ name_of_token_kind kind ^ "."))
+      (Report.make_loc token.loc ("expected " ^ name_of_token_kind kind ^ "."))
 
 and expect_list lexer kinds =
   match kinds with
@@ -47,16 +46,13 @@ and parse_factor lexer =
     match token.kind with
     | MULT ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Mult, tree, primary, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Mult, tree, primary, token.loc))
     | DIV ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Div, tree, primary, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Div, tree, primary, token.loc))
     | MOD ->
         let* primary, lexer = parse_primary next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Mod, tree, primary, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Mod, tree, primary, token.loc))
     | _ -> Ok (tree, lexer)
   in
   aux lexer primary
@@ -68,12 +64,10 @@ and parse_term lexer =
     match token.kind with
     | PLUS ->
         let* factor, lexer = parse_factor next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Plus, tree, factor, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Plus, tree, factor, token.loc))
     | MINUS ->
         let* factor, lexer = parse_factor next_lexer in
-        aux lexer
-          (Parsetree.BinOp (Parsetree.Minus, tree, factor, token.loc))
+        aux lexer (Parsetree.BinOp (Parsetree.Minus, tree, factor, token.loc))
     | _ -> Ok (tree, lexer)
   in
   aux lexer factor
