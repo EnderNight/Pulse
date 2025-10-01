@@ -1,36 +1,77 @@
+type flags = { dump_parsetree : bool }
+
+type pipeline_stage =
+  (* Frontend stages *)
+  | IoIn
+  | Parse of Lexer.t
+  | Codegen of Parsetree.program
+  | IoOut of Qbe.program
+  (* QBE stages *)
+  | QbeCompiler
+  (* Assembler stages *)
+  | Assembler
+
+type pipeline = {
+  infile : string;
+  outfile : string;
+  flags : flags;
+  stage : pipeline_stage;
+}
+
 let ( let* ) = Result.bind
 
-let compile dump_parsetree input_file output_file =
-  let result =
-    let* prog =
-      Utils.read_file input_file |> Lexer.make input_file |> Parser.parse
-    in
-    if dump_parsetree then (
-      Parsetree.to_dot prog |> print_endline;
-      Ok 0)
-    else
-      let ir_str = Codegen.gen_program prog |> Qbe.show_program
-      and out_ssa = output_file ^ ".ssa"
-      and out_s = output_file ^ ".s" in
-      let runtime_path =
-        Option.value (Sys.getenv_opt "PULSE_RUNTIMEDIR") ~default:"/usr/lib"
+let pipeline_run_stage pipeline =
+  match pipeline.stage with
+  | IoIn ->
+      let lexer =
+        Utils.read_file pipeline.infile |> Lexer.make pipeline.infile
       in
-      let qbe_cmd = "qbe " ^ out_ssa ^ " -o " ^ out_s
-      and cc_cmd =
-        "gcc " ^ out_s ^ " -o " ^ output_file ^ " -L" ^ runtime_path
-        ^ " -lpulsert"
+      Ok (Some (Parse lexer))
+  | Parse lexer -> (
+      match Parser.parse lexer with
+      | Ok program ->
+          if pipeline.flags.dump_parsetree then (
+            Parsetree.to_dot program |> print_endline;
+            Ok None)
+          else Ok (Some (Codegen program))
+      | Error report ->
+          Report.show report |> prerr_endline;
+          Error 1)
+  | Codegen program ->
+      let program = Codegen.gen_program program in
+      Ok (Some (IoOut program))
+  | IoOut program ->
+      let outfile_ssa = pipeline.outfile ^ ".ssa"
+      and program_str = Qbe.show_program program in
+      Utils.write_file outfile_ssa program_str;
+      Ok (Some QbeCompiler)
+  | QbeCompiler ->
+      let outfile_ssa = pipeline.outfile ^ ".ssa"
+      and outfile_s = pipeline.outfile ^ ".s" in
+      let qbe_cmd = "qbe " ^ outfile_ssa ^ " -o " ^ outfile_s in
+      let ret = Sys.command qbe_cmd in
+      if ret = 0 then Ok (Some Assembler) else Error ret
+  | Assembler ->
+      let outfile_s = pipeline.outfile ^ ".s" in
+      let as_cmd = "gcc " ^ outfile_s ^ " -o " ^ pipeline.outfile in
+      let as_cmd =
+        match Sys.getenv_opt "PULSE_RUNTIMEDIR" with
+        | None -> as_cmd
+        | Some var -> as_cmd ^ " -L" ^ var ^ " -lpulsert"
       in
-      Utils.write_file out_ssa ir_str;
-      let qbe_out = Sys.command qbe_cmd in
-      let cc_out = Sys.command cc_cmd in
-      (* idc, it's funny *)
-      Ok (qbe_out + cc_out)
+      let ret = Sys.command as_cmd in
+      if ret = 0 then Ok None else Error ret
+
+let pipeline_run pipeline =
+  let rec aux pipeline =
+    match pipeline_run_stage pipeline with
+    | Ok (Some stage) ->
+        let pipeline = { pipeline with stage } in
+        aux pipeline
+    | Ok None -> 0
+    | Error ret -> ret
   in
-  match result with
-  | Error report ->
-      Report.show report |> prerr_endline;
-      1
-  | Ok r -> r
+  aux pipeline
 
 let print_usage () = prerr_endline "USAGE: pulse [FLAGS] INPUT_FILE OUTPUT_FILE"
 
@@ -46,4 +87,8 @@ let main argc argv =
     1)
   else
     let dump_parsetree, idx = parse_flag "--dump-parsetree" argv 1 in
-    compile dump_parsetree argv.(idx) argv.(idx + 1)
+    let flags = { dump_parsetree } in
+    let pipeline =
+      { infile = argv.(idx); outfile = argv.(idx + 1); flags; stage = IoIn }
+    in
+    pipeline_run pipeline

@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Parsetree dump via the dot format and the `--dump-parsetree` flag.
+- Internal pipeline.
+
 ### Changed
 
 - Runtime uses C and the glibc.
 - Produced binaries are dynamicaly linked and depends on glibc and libpulsert.
-- Parsetree dump via the dot format and the `--dump-parsetree` flag.
 
 ## [0.1.0]
 
