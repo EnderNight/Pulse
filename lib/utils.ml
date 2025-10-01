@@ -5,3 +5,5 @@ and read_file path = In_channel.with_open_text path In_channel.input_all
 
 and write_file path str =
   Out_channel.with_open_text path (fun oc -> Out_channel.output_string oc str)
+
+and swap (a, b) = (b, a)
