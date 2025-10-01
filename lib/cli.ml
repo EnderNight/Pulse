@@ -7,22 +7,20 @@ let compile input_file output_file =
     in
     let ir_str = Codegen.gen_program prog |> Qbe.show_program
     and out_ssa = output_file ^ ".ssa"
-    and out_s = output_file ^ ".s"
-    and out_o = output_file ^ ".o" in
+    and out_s = output_file ^ ".s" in
     let runtime_path =
       Option.value (Sys.getenv_opt "PULSE_RUNTIMEDIR") ~default:"/usr/lib"
     in
     let qbe_cmd = "qbe " ^ out_ssa ^ " -o " ^ out_s
-    and as_cmd = "as " ^ out_s ^ " -o " ^ out_o
-    and ld_cmd =
-      "ld " ^ out_o ^ " -o " ^ output_file ^ " -L" ^ runtime_path ^ " -lpulsert"
+    and cc_cmd =
+      "gcc " ^ out_s ^ " -o " ^ output_file ^ " -L" ^ runtime_path
+      ^ " -lpulsert"
     in
     Utils.write_file out_ssa ir_str;
     let qbe_out = Sys.command qbe_cmd in
-    let as_out = Sys.command as_cmd in
-    let ld_out = Sys.command ld_cmd in
+    let cc_out = Sys.command cc_cmd in
     (* idc, it's funny *)
-    Ok (qbe_out + as_out + ld_out)
+    Ok (qbe_out + cc_out)
   in
   match result with
   | Error report ->

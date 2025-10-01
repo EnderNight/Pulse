@@ -14,6 +14,10 @@
           ocaml
           dune_3
 
+          gcc15
+          gnumake
+          bear
+
           qbe
         ]) ++ (with pkgs.ocamlPackages; [
           findlib

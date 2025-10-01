@@ -130,21 +130,10 @@ and gen_statement_block block g = List.fold_left gen_statement g block
 
 and gen_program prog =
   let g = gen_init in
-  let exit_arg = gen_const_op Int64.zero Qbe.W in
-  let exit_call =
-    Qbe.Call { ret = None; func = "sys_exit"; args = [ exit_arg ] }
-  in
-  let blocks =
-    List.fold_left gen_statement g prog
-    |> gen_append_inst exit_call |> gen_func_body Qbe.Hlt
-  in
+  let ret_op = gen_const_op Int64.zero Qbe.W in
+  let ret_inst = Qbe.Ret ret_op in
+  let blocks = List.fold_left gen_statement g prog |> gen_func_body ret_inst in
   let func : Qbe.func =
-    {
-      exported = true;
-      ret_ty = Qbe.W;
-      func = "_start";
-      args = [];
-      body = blocks;
-    }
+    { exported = true; ret_ty = Qbe.W; func = "main"; args = []; body = blocks }
   in
   [ func ]

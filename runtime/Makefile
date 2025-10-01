@@ -1,13 +1,22 @@
-LIB=libpulsert.a
+CC=gcc
+CPPFLAGS=
+CFLAGS=-Wall -Wextra -std=gnu23 -pedantic
+LDFLAGS=
 
-DEPS=syscalls.s io.s
-OBJ=${DEPS:.s=.o}
+SRC=runtime.c
 
-%.o: %.s
-	as $^ -o $@
+OBJ=${SRC:.c=.o}
+
+LIB=libpulsert.so
+
+
+.PHONY: all $(LIB) clean
+
+
+all: $(LIB)
 
 $(LIB): $(OBJ)
-	ar rcs $@ $(OBJ)
+	gcc -o $@ $^ -shared
 
 clean:
 	$(RM) $(LIB) $(OBJ)

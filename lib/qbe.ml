@@ -142,7 +142,7 @@ and show_jmp_inst jmp_inst =
       and lnz = show_label lnz
       and lz = show_label lz in
       "jnz " ^ op ^ ", " ^ lnz ^ ", " ^ lz
-  | Ret op -> "ret " ^ show_operand op
+  | Ret op -> "ret " ^ show_operand_kind op.kind
   | Hlt -> "hlt"
 
 and show_block b =
