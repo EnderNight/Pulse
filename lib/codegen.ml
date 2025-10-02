@@ -42,22 +42,23 @@ let gen_ident_op name scope ty =
 
 and gen_const_op value ty = ({ ty; kind = Qbe.Const value } : Qbe.operand)
 
-let rec gen_expr exp g =
-  match exp with
-  | Parsetree.Int (c, _) ->
-      let kind = Qbe.Const c in
-      let op : Qbe.operand = { ty = Qbe.L; kind } in
+let gen_qbe_type (ty : Types.ty) =
+  match ty.name with "int" -> Qbe.L | _ -> Utils.not_impl "gen_qbe_type"
+
+let rec gen_expr (exp : Typetree.expression) g =
+  let ty = gen_qbe_type exp.ty in
+  match exp.kind with
+  | Typetree.Int c ->
+      let op = gen_const_op c ty in
       (op, [], g)
-  | Parsetree.Var (v, _) ->
-      let ident : Qbe.ident = { name = v; scope = Qbe.Local } in
-      let kind = Qbe.Ident ident in
-      let op : Qbe.operand = { ty = Qbe.L; kind } in
+  | Typetree.Var v ->
+      let op = gen_ident_op v Qbe.Local ty in
       (op, [], g)
-  | Parsetree.BinOp (op, lhs, rhs, _) ->
+  | Typetree.BinOp (op, lhs, rhs) ->
       let lop, linst, g = gen_expr lhs g in
       let rop, rinst, g = gen_expr rhs g in
       let tmp, g = gen_op g in
-      let tmp_op = gen_ident_op tmp Qbe.Local Qbe.L in
+      let tmp_op = gen_ident_op tmp Qbe.Local ty in
       let inst =
         match op with
         | Plus -> Qbe.Add (tmp_op, lop, rop)
@@ -75,31 +76,31 @@ let rec gen_expr exp g =
       in
       (tmp_op, (inst :: rinst) @ linst, g)
 
-and gen_statement g stmt =
-  match stmt with
-  | Parsetree.Let (v, expr, _) ->
+and gen_statement g (stmt : Typetree.statement) =
+  match stmt.kind with
+  | Typetree.Let (id, expr) ->
       let tmp_op, insts, g = gen_expr expr g in
-      let op = gen_ident_op v Qbe.Local Qbe.L in
+      let op = gen_ident_op id Qbe.Local tmp_op.ty in
       let copy_inst = Qbe.Copy (op, tmp_op) in
       gen_append_insts (copy_inst :: insts) g
-  | Parsetree.Assign (v, expr, _) ->
+  | Typetree.Assign (id, expr) ->
       let tmp_op, insts, g = gen_expr expr g in
-      let op = gen_ident_op v Qbe.Local Qbe.L in
+      let op = gen_ident_op id Qbe.Local tmp_op.ty in
       let copy_inst = Qbe.Copy (op, tmp_op) in
       gen_append_insts (copy_inst :: insts) g
-  | Parsetree.Print (expr, _) ->
+  | Typetree.Print expr ->
       let tmp_op, insts, g = gen_expr expr g in
       let call_inst =
         Qbe.Call { ret = None; func = "print"; args = [ tmp_op ] }
       in
       gen_append_insts (call_inst :: insts) g
-  | Parsetree.PrintInt (expr, _) ->
+  | Typetree.PrintInt expr ->
       let tmp_op, insts, g = gen_expr expr g in
       let call_inst =
         Qbe.Call { ret = None; func = "print_int"; args = [ tmp_op ] }
       in
       gen_append_insts (call_inst :: insts) g
-  | Parsetree.IfElse (cond, btrue, bfalse, _) ->
+  | Typetree.IfElse (cond, btrue, bfalse) ->
       let cond_lbl, g = gen_label "if.cond" g in
       let true_lbl, g = gen_label "if.true" g in
       let false_lbl, g = gen_label "if.false" g in
@@ -115,7 +116,7 @@ and gen_statement g stmt =
         ~some:(fun bfalse -> gen_statement_block bfalse g)
         bfalse)
       |> gen_append_block end_lbl (Qbe.Jmp end_lbl)
-  | Parsetree.While (cond, body, _) ->
+  | Typetree.While (cond, body) ->
       let cond_lbl, g = gen_label "while.cond" g in
       let body_lbl, g = gen_label "while.body" g in
       let end_lbl, g = gen_label "while.end" g in
@@ -128,7 +129,7 @@ and gen_statement g stmt =
 
 and gen_statement_block block g = List.fold_left gen_statement g block
 
-and gen_program prog =
+and gen_program (prog : Typetree.program) =
   let g = gen_init in
   let ret_op = gen_const_op Int64.zero Qbe.W in
   let ret_inst = Qbe.Ret ret_op in

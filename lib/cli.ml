@@ -1,10 +1,14 @@
-type flags = { dump_parsetree : bool }
+type flags = {
+  dump_parsetree : bool;
+  dump_typetree : bool;
+}
 
 type pipeline_stage =
   (* Frontend stages *)
   | IoIn
   | Parse of Lexer.t
-  | Codegen of Parsetree.program
+  | TypeCheck of Parsetree.program
+  | Codegen of Typetree.program
   | IoOut of Qbe.program
   (* QBE stages *)
   | QbeCompiler
@@ -32,6 +36,16 @@ let pipeline_run_stage pipeline =
       | Ok program ->
           if pipeline.flags.dump_parsetree then (
             Parsetree.to_dot program |> print_endline;
+            Ok None)
+          else Ok (Some (TypeCheck program))
+      | Error report ->
+          Report.show report |> prerr_endline;
+          Error 1)
+  | TypeCheck program -> (
+      match Typechecker.type_check program with
+      | Ok program ->
+          if pipeline.flags.dump_typetree then (
+            Typetree.to_dot program |> print_endline;
             Ok None)
           else Ok (Some (Codegen program))
       | Error report ->
@@ -90,7 +104,8 @@ let main argc argv =
     1)
   else
     let dump_parsetree, idx = parse_flag "--dump-parsetree" argv 1 in
-    let flags = { dump_parsetree } in
+    let dump_typetree, idx = parse_flag "--dump-typetree" argv idx in
+    let flags = { dump_parsetree; dump_typetree } in
     let pipeline =
       { infile = argv.(idx); outfile = argv.(idx + 1); flags; stage = IoIn }
     in

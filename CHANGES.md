@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Parsetree dump via the dot format and the `--dump-parsetree` flag.
-- Internal pipeline.
+- Ast dump via the dot format:
+    - Parsetree with the `--dump-parsetree` flag.
+    - Typetree with the `--dump-typetree` flag.
+- Internal compilation pipeline.
+- Basic type system:
+    - The language is strongly and staticaly typed.
+    - Types are nominal.
+    - First primitive type: `int`, which represents 64bit two's complement integers.
 
 ### Changed
 
