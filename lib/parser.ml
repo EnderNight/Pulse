@@ -156,10 +156,11 @@ and parse_statment lexer =
 
 and parse_statment_block lexer =
   let rec aux lexer acc =
-    let* stmt, lexer = parse_statment lexer in
     let* token, next_lexer = Lexer.next_token lexer in
-    if token.kind = RBRACK then Ok (stmt :: acc, next_lexer)
-    else aux lexer (stmt :: acc)
+    if token.kind = RBRACK then Ok (acc, next_lexer)
+    else
+      let* stmt, lexer = parse_statment lexer in
+      aux lexer (stmt :: acc)
   in
   let* _, lexer = expect lexer LBRACK in
   let* trees, lexer = aux lexer [] in
