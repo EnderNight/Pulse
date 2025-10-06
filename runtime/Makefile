@@ -1,6 +1,6 @@
 CC=gcc
 CPPFLAGS=
-CFLAGS=-Wall -Wextra -std=gnu23 -pedantic
+CFLAGS=-Wall -Wextra -std=gnu23 -pedantic -fPIC
 LDFLAGS=
 
 SRC=io.c array.c
@@ -16,7 +16,7 @@ LIB=libpulsert.so
 all: $(LIB)
 
 $(LIB): $(OBJ)
-	gcc -o $@ $^ -shared
+	gcc -o $@ $^ -fPIC -shared
 
 clean:
 	$(RM) $(LIB) $(OBJ)
