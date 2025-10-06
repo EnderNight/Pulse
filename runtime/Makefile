@@ -3,7 +3,7 @@ CPPFLAGS=
 CFLAGS=-Wall -Wextra -std=gnu23 -pedantic
 LDFLAGS=
 
-SRC=runtime.c
+SRC=io.c array.c
 
 OBJ=${SRC:.c=.o}
 

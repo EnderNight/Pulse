@@ -1,179 +1,313 @@
-open Token
-
 let ( let* ) = Result.bind
 
-let rec expect lexer kind =
+let expect lexer token_kind =
   let* token, lexer = Lexer.next_token lexer in
-  if token_kind_loose_equal token.kind kind then Ok (token, lexer)
-  else
-    Error
-      (Report.make_loc token.loc ("expected " ^ name_of_token_kind kind ^ "."))
+  match Token.token_kind_loose_equal token.kind token_kind with
+  | true -> Ok (token, lexer)
+  | false ->
+      let msg =
+        "unexpected character. Expecting "
+        ^ Token.name_of_token_kind token_kind
+        ^ "."
+      in
+      Error (Report.make_loc token.loc msg)
 
-and expect_list lexer kinds =
-  match kinds with
-  | kind :: tl ->
-      let* token, lexer = expect lexer kind in
-      let* tokens, lexer = expect_list lexer tl in
-      Ok (token :: tokens, lexer)
-  | [] -> Ok ([], lexer)
-
-and expect_or lexer kinds =
+and expect_ident lexer =
   let* token, lexer = Lexer.next_token lexer in
-  let equals = List.map (token_kind_loose_equal token.kind) kinds in
-  if Utils.any equals then Ok (token, lexer)
-  else
-    let msg =
-      "expected "
-      ^ String.concat " or " (List.map name_of_token_kind kinds)
-      ^ "."
-    in
-    Error (Report.make_loc token.loc msg)
-
-and parse_primary lexer =
-  let* token, lexer = expect_or lexer [ INT ""; IDENT ""; LPAREN ] in
   match token.kind with
-  | INT num -> Ok (Parsetree.Int (Int64.of_string num, token.loc), lexer)
-  | IDENT id -> Ok (Parsetree.Var (id, token.loc), lexer)
+  | Token.IDENT id -> Ok (token, id, lexer)
   | _ ->
-      let* expr, lexer = parse_expr lexer in
-      let* _, lexer = expect lexer RPAREN in
+      let msg =
+        "unexpected character. Expecting "
+        ^ Token.name_of_token_kind token.kind
+        ^ "."
+      in
+      Error (Report.make_loc token.loc msg)
+
+let gen_expr kind loc : Astree.expression = { kind; loc }
+and gen_stmt kind loc : Astree.statement = { kind; loc }
+
+let rec parse_primary_expr lexer =
+  let* token, lexer = Lexer.next_token lexer in
+  match token.kind with
+  | Token.INT n ->
+      let kind = Astree.Number (Int64.of_string n) in
+      let expr = gen_expr kind token.loc in
       Ok (expr, lexer)
+  | Token.IDENT id ->
+      let kind = Astree.Ident id in
+      let expr = gen_expr kind token.loc in
+      Ok (expr, lexer)
+  | Token.LBRACK ->
+      let* expr, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer Token.RBRACK in
+      let kind = Astree.ArrayInit expr in
+      let expr = gen_expr kind token.loc in
+      Ok (expr, lexer)
+  | Token.LPAREN ->
+      let* expr, lexer = parse_expr lexer in
+      let* _, lexer = expect lexer Token.RPAREN in
+      Ok (expr, lexer)
+  | _ ->
+      let msg = "unexpected character." in
+      Error (Report.make_loc token.loc msg)
 
-and parse_factor lexer =
-  let* primary, lexer = parse_primary lexer in
-  let rec aux lexer tree =
-    let* token, next_lexer = Lexer.next_token lexer in
+and parse_postfix_expr lexer =
+  let* primary, lexer = parse_primary_expr lexer in
+  let* token, nlexer = Lexer.next_token lexer in
+  match token.kind with
+  | Token.LBRACK ->
+      let* expr, lexer = parse_expr nlexer in
+      let* _, lexer = expect lexer RBRACK in
+      let kind = Astree.ArrayAccess (primary, expr) in
+      let expr = gen_expr kind primary.loc in
+      Ok (expr, lexer)
+  | _ -> Ok (primary, lexer)
+
+and parse_mult_expr lexer =
+  let* postfix, lexer = parse_postfix_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
     match token.kind with
-    | MULT ->
-        let* primary, lexer = parse_primary next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Mult, tree, primary, token.loc))
-    | DIV ->
-        let* primary, lexer = parse_primary next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Div, tree, primary, token.loc))
-    | MOD ->
-        let* primary, lexer = parse_primary next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Mod, tree, primary, token.loc))
-    | _ -> Ok (tree, lexer)
+    | Token.MULT ->
+        let* postfix, lexer = parse_postfix_expr nlexer in
+        let kind = Astree.BinOp (Astree.Mul, tacc, postfix) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.DIV ->
+        let* postfix, lexer = parse_postfix_expr nlexer in
+        let kind = Astree.BinOp (Astree.Div, tacc, postfix) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.MOD ->
+        let* postfix, lexer = parse_postfix_expr nlexer in
+        let kind = Astree.BinOp (Astree.Mod, tacc, postfix) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
   in
-  aux lexer primary
+  aux lexer postfix
 
-and parse_term lexer =
-  let* factor, lexer = parse_factor lexer in
-  let rec aux lexer tree =
-    let* token, next_lexer = Lexer.next_token lexer in
+and parse_add_expr lexer =
+  let* mult, lexer = parse_mult_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
     match token.kind with
-    | PLUS ->
-        let* factor, lexer = parse_factor next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Plus, tree, factor, token.loc))
-    | MINUS ->
-        let* factor, lexer = parse_factor next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Minus, tree, factor, token.loc))
-    | _ -> Ok (tree, lexer)
+    | Token.PLUS ->
+        let* mult, lexer = parse_mult_expr nlexer in
+        let kind = Astree.BinOp (Astree.Add, tacc, mult) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.MINUS ->
+        let* mult, lexer = parse_mult_expr nlexer in
+        let kind = Astree.BinOp (Astree.Sub, tacc, mult) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
   in
-  aux lexer factor
+  aux lexer mult
 
-and parse_relation lexer =
-  let* term, lexer = parse_term lexer in
-  let rec aux lexer tree =
-    let* token, next_lexer = Lexer.next_token lexer in
+and parse_shift_expr lexer =
+  let* add, lexer = parse_add_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
     match token.kind with
-    | LT ->
-        let* term, lexer = parse_term next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Lt, tree, term, token.loc))
-    | LE ->
-        let* term, lexer = parse_term next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Le, tree, term, token.loc))
-    | GT ->
-        let* term, lexer = parse_term next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Gt, tree, term, token.loc))
-    | GE ->
-        let* term, lexer = parse_term next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Ge, tree, term, token.loc))
-    | _ -> Ok (tree, lexer)
+    | Token.SHL ->
+        let* add, lexer = parse_add_expr nlexer in
+        let kind = Astree.BinOp (Astree.Shl, tacc, add) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.SHR ->
+        let* add, lexer = parse_add_expr nlexer in
+        let kind = Astree.BinOp (Astree.Shr, tacc, add) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
   in
-  aux lexer term
+  aux lexer add
 
-and parse_equal lexer =
-  let* rela, lexer = parse_relation lexer in
-  let rec aux lexer tree =
-    let* token, next_lexer = Lexer.next_token lexer in
+and parse_rela_expr lexer =
+  let* shift, lexer = parse_shift_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
     match token.kind with
-    | DEQ ->
-        let* rela, lexer = parse_relation next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Eq, tree, rela, token.loc))
-    | NEQ ->
-        let* rela, lexer = parse_relation next_lexer in
-        aux lexer (Parsetree.BinOp (Parsetree.Neq, tree, rela, token.loc))
-    | _ -> Ok (tree, lexer)
+    | Token.LT ->
+        let* shift, lexer = parse_shift_expr nlexer in
+        let kind = Astree.BinOp (Astree.Lt, tacc, shift) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.LE ->
+        let* shift, lexer = parse_shift_expr nlexer in
+        let kind = Astree.BinOp (Astree.Le, tacc, shift) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.GT ->
+        let* shift, lexer = parse_shift_expr nlexer in
+        let kind = Astree.BinOp (Astree.Gt, tacc, shift) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.GE ->
+        let* shift, lexer = parse_shift_expr nlexer in
+        let kind = Astree.BinOp (Astree.Ge, tacc, shift) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
+  in
+  aux lexer shift
+
+and parse_equal_expr lexer =
+  let* rela, lexer = parse_rela_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
+    match token.kind with
+    | Token.DEQ ->
+        let* rela, lexer = parse_rela_expr nlexer in
+        let kind = Astree.BinOp (Astree.Eq, tacc, rela) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | Token.NEQ ->
+        let* rela, lexer = parse_rela_expr nlexer in
+        let kind = Astree.BinOp (Astree.Neq, tacc, rela) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
   in
   aux lexer rela
 
-and parse_expr lexer = parse_equal lexer
-
-and parse_statment lexer =
-  let* token, lexer =
-    expect_or lexer [ LET; PRINT; PRINT_INT; IDENT ""; IF; WHILE ]
+and parse_and_expr lexer =
+  let* equal, lexer = parse_equal_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
+    match token.kind with
+    | Token.AND ->
+        let* equal, lexer = parse_equal_expr nlexer in
+        let kind = Astree.BinOp (Astree.And, tacc, equal) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
   in
+  aux lexer equal
+
+and parse_or_expr lexer =
+  let* and_expr, lexer = parse_and_expr lexer in
+  let rec aux lexer tacc =
+    let* token, nlexer = Lexer.next_token lexer in
+    match token.kind with
+    | Token.OR ->
+        let* and_expr, lexer = parse_and_expr nlexer in
+        let kind = Astree.BinOp (Astree.Or, tacc, and_expr) in
+        let expr = gen_expr kind token.loc in
+        aux lexer expr
+    | _ -> Ok (tacc, lexer)
+  in
+  aux lexer and_expr
+
+and parse_expr lexer = parse_or_expr lexer
+
+and parse_let_stmt lexer =
+  let* token, lexer = expect lexer Token.LET in
+  let* _, id, lexer = expect_ident lexer in
+  let* _, lexer = expect lexer Token.EQ in
+  let* expr, lexer = parse_expr lexer in
+  let* _, lexer = expect lexer Token.SEMICOLON in
+  let kind = Astree.Let (id, expr) in
+  let stmt = gen_stmt kind token.loc in
+  Ok (stmt, lexer)
+
+and parse_if_stmt lexer =
+  let* token, lexer = expect lexer Token.IF in
+  let* _, lexer = expect lexer Token.LPAREN in
+  let* cond, lexer = parse_expr lexer in
+  let* _, lexer = expect lexer Token.RPAREN in
+  let* btrue, lexer = parse_block lexer in
+  let* etoken, elexer = Lexer.next_token lexer in
+  match etoken.kind with
+  | Token.ELSE ->
+      let* bfalse, lexer = parse_block elexer in
+      let kind = Astree.IfElse (cond, btrue, bfalse) in
+      let stmt = gen_stmt kind token.loc in
+      Ok (stmt, lexer)
+  | _ ->
+      let kind = Astree.If (cond, btrue) in
+      let stmt = gen_stmt kind token.loc in
+      Ok (stmt, lexer)
+
+and parse_while_stmt lexer =
+  let* token, lexer = expect lexer Token.WHILE in
+  let* _, lexer = expect lexer Token.LPAREN in
+  let* cond, lexer = parse_expr lexer in
+  let* _, lexer = expect lexer Token.RPAREN in
+  let* block, lexer = parse_block lexer in
+  let kind = Astree.While (cond, block) in
+  let stmt = gen_stmt kind token.loc in
+  Ok (stmt, lexer)
+
+and parse_print_stmt lexer =
+  let* token, lexer = expect lexer Token.PRINT in
+  let* expr, lexer = parse_expr lexer in
+  let* _, lexer = expect lexer Token.SEMICOLON in
+  let kind = Astree.Print expr in
+  let stmt = gen_stmt kind token.loc in
+  Ok (stmt, lexer)
+
+and parse_print_int_stmt lexer =
+  let* token, lexer = expect lexer Token.PRINT_INT in
+  let* expr, lexer = parse_expr lexer in
+  let* _, lexer = expect lexer Token.SEMICOLON in
+  let kind = Astree.PrintInt expr in
+  let stmt = gen_stmt kind token.loc in
+  Ok (stmt, lexer)
+
+and parse_postfix_stmt lexer =
+  let* expr, lexer = parse_expr lexer in
+  let* token, alexer = Lexer.next_token lexer in
+  let* kind, lexer =
+    match token.kind with
+    | Token.EQ ->
+        let* val_expr, lexer = parse_expr alexer in
+        let kind = Astree.Assign (expr, val_expr) in
+        Ok (kind, lexer)
+    | _ ->
+        let kind = Astree.Expression expr in
+        Ok (kind, lexer)
+  in
+  let* _, lexer = expect lexer Token.SEMICOLON in
+  let stmt = gen_stmt kind expr.loc in
+  Ok (stmt, lexer)
+
+and parse_statement lexer =
+  let* token, _ = Lexer.next_token lexer in
   match token.kind with
-  | LET -> (
-      let* tokens, lexer = expect_list lexer [ IDENT ""; EQ ] in
-      match List.nth tokens 0 with
-      | { kind = IDENT ident; loc } ->
-          let* expr, lexer = parse_expr lexer in
-          let* _, lexer = expect lexer SEMICOLON in
-          Ok (Parsetree.Let (ident, expr, loc), lexer)
-      | _ -> failwith "parse_statment: Unreachable")
-  | PRINT ->
-      let* expr, lexer = parse_expr lexer in
-      let* _, lexer = expect lexer SEMICOLON in
-      Ok (Parsetree.Print (expr, token.loc), lexer)
-  | PRINT_INT ->
-      let* expr, lexer = parse_expr lexer in
-      let* _, lexer = expect lexer SEMICOLON in
-      Ok (Parsetree.PrintInt (expr, token.loc), lexer)
-  | IDENT id ->
-      let* _, lexer = expect lexer EQ in
-      let* expr, lexer = parse_expr lexer in
-      let* _, lexer = expect lexer SEMICOLON in
-      Ok (Parsetree.Assign (id, expr, token.loc), lexer)
-  | IF ->
-      let* _, lexer = expect lexer LPAREN in
-      let* cond, lexer = parse_expr lexer in
-      let* _, lexer = expect lexer RPAREN in
-      let* btrue, lexer = parse_statment_block lexer in
-      let* else_token, next_lexer = Lexer.next_token lexer in
-      if else_token.kind = ELSE then
-        let* bfalse, lexer = parse_statment_block next_lexer in
-        Ok (Parsetree.IfElse (cond, btrue, Some bfalse, token.loc), lexer)
-      else Ok (Parsetree.IfElse (cond, btrue, None, token.loc), lexer)
-  | WHILE ->
-      let* _, lexer = expect lexer LPAREN in
-      let* cond, lexer = parse_expr lexer in
-      let* _, lexer = expect lexer RPAREN in
-      let* body, lexer = parse_statment_block lexer in
-      Ok (Parsetree.While (cond, body, token.loc), lexer)
-  | _ -> failwith "parse_statment: Unexpected token"
+  | Token.LET -> parse_let_stmt lexer
+  | Token.IF -> parse_if_stmt lexer
+  | Token.WHILE -> parse_while_stmt lexer
+  | Token.PRINT -> parse_print_stmt lexer
+  | Token.PRINT_INT -> parse_print_int_stmt lexer
+  | _ -> parse_postfix_stmt lexer
 
-and parse_statment_block lexer =
-  let rec aux lexer acc =
-    let* token, next_lexer = Lexer.next_token lexer in
-    if token.kind = RBRACK then Ok (acc, next_lexer)
-    else
-      let* stmt, lexer = parse_statment lexer in
-      aux lexer (stmt :: acc)
+and parse_block lexer =
+  let* _, lexer = expect lexer Token.LBRACE in
+  let* block, lexer =
+    let rec aux lexer sacc =
+      let* token, nlexer = Lexer.next_token lexer in
+      match token.kind with
+      | Token.RBRACE -> Ok (List.rev sacc, nlexer)
+      | _ ->
+          let* stmt, lexer = parse_statement lexer in
+          aux lexer (stmt :: sacc)
+    in
+    aux lexer []
   in
-  let* _, lexer = expect lexer LBRACK in
-  let* trees, lexer = aux lexer [] in
-  Ok (List.rev trees, lexer)
+  Ok (block, lexer)
 
-and parse_program lexer =
-  let rec aux lexer acc =
-    let* stmt, lexer = parse_statment lexer in
+and parse lexer =
+  let rec aux lexer sacc =
     let* token, _ = Lexer.next_token lexer in
-    if token.kind <> EOF then aux lexer (stmt :: acc)
-    else Ok (stmt :: acc, lexer)
+    match token.kind with
+    | Token.EOF -> Ok (List.rev sacc, lexer)
+    | _ ->
+        let* stmt, lexer = parse_statement lexer in
+        aux lexer (stmt :: sacc)
   in
-  let* trees, _ = aux lexer [] in
-  Ok (List.rev trees)
-
-and parse lexer = parse_program lexer
+  let* prog, _ = aux lexer [] in
+  Ok prog

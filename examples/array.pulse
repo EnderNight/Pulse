@@ -1,0 +1,21 @@
+let newline = 10;
+
+let arr_length = 10;
+let arr = [arr_length];
+
+let i = 0;
+
+while (i < 10) {
+  arr[i] = i;
+
+  i = i + 1;
+}
+
+i = 0;
+
+while (i < 10) {
+  print_int arr[i];
+  print newline;
+
+  i = i + 1;
+}

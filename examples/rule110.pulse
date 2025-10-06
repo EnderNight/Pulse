@@ -1,0 +1,36 @@
+let newline = 10;
+let space = 32;
+let star = 42;
+
+let board_cap = 256;
+let board = [board_cap];
+
+board[board_cap - 2] = 1;
+
+let i = 0;
+while (i < board_cap - 2) {
+
+  let j = 0;
+  while (j < board_cap) {
+    if (board[j] == 0) {
+      print space;
+    } else {
+      print star;
+    }
+
+    j = j + 1;
+  }
+
+  print newline;
+
+  let pattern = (board[0] << 1) | board[1];
+  let j = 1;
+  while (j < board_cap - 1) {
+    pattern = ((pattern << 1) & 7) | board[j + 1];
+    board[j] = (110 >> pattern) & 1;
+
+    j = j + 1;
+  }
+
+  i = i + 1;
+}

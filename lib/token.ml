@@ -15,9 +15,15 @@ type token_kind =
   | LE
   | GT
   | GE
+  | OR
+  | AND
+  | SHL
+  | SHR
   (* Punctuators *)
   | LPAREN
   | RPAREN
+  | LBRACE
+  | RBRACE
   | LBRACK
   | RBRACK
   | SEMICOLON
@@ -53,8 +59,14 @@ and name_of_token_kind = function
   | LE -> "less than or equal sign"
   | GT -> "greater than sign"
   | GE -> "greater than or equal sign"
+  | OR -> "or"
+  | AND -> "and"
+  | SHL -> "shift left"
+  | SHR -> "shift right"
   | LPAREN -> "left parenthesis"
   | RPAREN -> "right parenthesis"
+  | LBRACE -> "left brace"
+  | RBRACE -> "right "
   | LBRACK -> "left bracket"
   | RBRACK -> "right bracket"
   | SEMICOLON -> "semicolon"
