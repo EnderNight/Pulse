@@ -1,49 +1,103 @@
 program =
-  | statement+ EOF ;
+  | statement+ EOF
+  ;
+
+
+
+######### Statements #########
 
 statement =
-  | "let" IDENT "=" expr ";"
-  | "print" expr ";"
-  | "print_int" expr ";"
-  | IDENT "=" expr ";"
-  | "if" "(" epxr ")" stmt_block [else_stmt]
-  | "while" "(" expr ")" stmt_block
+  | let_stmt
+  | if_stmt
+  | while_stmt
+  | print_stmt
+  | print_int_stmt
+  | postfix_stmt
+  ;
+
+let_stmt =
+  | "let" IDENT "=" expression ";"
+  ;
+
+if_stmt =
+  | "if" "(" expression ")" stmt_block ( else_stmt )?
   ;
 
 else_stmt =
   | "else" stmt_block
   ;
 
+while_stmt =
+  | "while" "(" expression ")" stmt_block
+  ;
+
+print_stmt =
+  | "print" expression ";"
+  ;
+
+print_int_stmt =
+  | "print_int" expression ";"
+  ;
+
+postfix_stmt =
+  | expression ( "=" expression )? ";"
+  ;
+
 stmt_block =
   | "{" statement* "}"
   ;
 
-expr =
-  | relation
+
+
+######### Expressions #########
+
+expression =
+  | or_expr
   ;
 
-equal =
-  | relation ( ("==" | "!=") relation )*
+or_expr =
+  | and_expr ( "|" and_expr )*
+
+and_expr =
+  | equal_expr ( "&" equal_expr )*
   ;
 
-relation =
-  | term ( ("<" | "<=" | ">" | ">=") term )*
+equal_expr =
+  | rela_expr ( ( "==" | "!=" ) rela_expr)*
   ;
 
-term =
-  | factor ( ("+" | "-") factor )*
+rela_expr =
+  | shift_expr ( ( "<" | "<=" | ">" | ">=" ) shift_expr )*
   ;
 
-factor =
-  | primary ( ("*" | "/" | "%") primary )*
+shift_expr =
+  | add_expr ( ( "<<" | ">>" ) add_expr )*
+
+add_expr =
+  | mult_expr ( ( "+" | "-" ) mult_expr )*
   ;
 
-primary =
+mult_expr =
+  | postfix_expr ( ( "*" | "/" | "%" ) postfix_expr )*
+  ;
+
+postfix_expr =
+  | primary_expr ( "[" expression "]" )?
+  ;
+
+primary_expr =
   | NUMBER
   | IDENT
-  | "(" expr ")"
+  | "[" expression "]"
+  | "(" expression ")"
   ;
 
+
+
+######### Constants #########
 
 NUMBER = [0-9]+ ;
 IDENT = [a-zA-Z_][a-zA-Z0-9_]* ;
+
+
+a[1] = 0;

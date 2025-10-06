@@ -4,6 +4,8 @@ type t = {
   loc : Location.t;
 }
 
+let ( let* ) = Result.bind
+
 let rec make file_name program =
   let loc = Location.make file_name in
   { program; pos = 0; loc }
@@ -60,6 +62,10 @@ and skip_whitespaces lexer =
 and lex_number lexer = seek lexer is_number
 and lex_identifier lexer = seeki lexer is_identifier_idx
 
+and peek lexer =
+  let* token, _ = next_token lexer in
+  Ok token
+
 and next_token lexer =
   let ( let* ) = Result.bind in
   let lexer = skip_whitespaces lexer in
@@ -76,9 +82,13 @@ and next_token lexer =
         | '%' -> Ok (Token.MOD, next_lexer)
         | '(' -> Ok (Token.LPAREN, next_lexer)
         | ')' -> Ok (Token.RPAREN, next_lexer)
-        | '{' -> Ok (Token.LBRACK, next_lexer)
-        | '}' -> Ok (Token.RBRACK, next_lexer)
+        | '{' -> Ok (Token.LBRACE, next_lexer)
+        | '}' -> Ok (Token.RBRACE, next_lexer)
+        | '[' -> Ok (Token.LBRACK, next_lexer)
+        | ']' -> Ok (Token.RBRACK, next_lexer)
         | ';' -> Ok (Token.SEMICOLON, next_lexer)
+        | '|' -> Ok (Token.OR, next_lexer)
+        | '&' -> Ok (Token.AND, next_lexer)
         | '=' -> (
             match next_char next_lexer with
             | Some '=', next_lexer -> Ok (Token.DEQ, next_lexer)
@@ -92,10 +102,12 @@ and next_token lexer =
         | '<' -> (
             match next_char next_lexer with
             | Some '=', next_lexer -> Ok (Token.LE, next_lexer)
+            | Some '<', next_lexer -> Ok (Token.SHL, next_lexer)
             | _ -> Ok (Token.LT, next_lexer))
         | '>' -> (
             match next_char next_lexer with
             | Some '=', next_lexer -> Ok (Token.GE, next_lexer)
+            | Some '>', next_lexer -> Ok (Token.SHR, next_lexer)
             | _ -> Ok (Token.GT, next_lexer))
         | '0' .. '9' ->
             let num, next_lexer = lex_number lexer in

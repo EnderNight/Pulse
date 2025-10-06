@@ -1,12 +1,28 @@
-type expression_kind =
+type binop =
+  | Add
+  | Sub
+  | Mul
+  | Div
+  | Mod
+  | Eq
+  | Neq
+  | Lt
+  | Le
+  | Gt
+  | Ge
+  | Or
+  | And
+  | Shl
+  | Shr
+
+and expression_kind =
   | Number of int64
-  | Var of string
-  | BinOp of Astree.binop * expression * expression
+  | Ident of string
   | ArrayInit of expression
   | ArrayAccess of expression * expression
+  | BinOp of binop * expression * expression
 
 and expression = {
-  ty : Types.ty;
   kind : expression_kind;
   loc : Location.t;
 }
@@ -42,15 +58,12 @@ let rec expr_to_dot expr g =
   | Number n ->
       let node_name, g = gen_node g in
       let node =
-        node_name ^ " [label=\"{Number|{" ^ expr.ty.name ^ "|"
-        ^ Int64.to_string n ^ "}}\"]"
+        node_name ^ " [label=\"{Number|" ^ Int64.to_string n ^ "}\"]"
       in
       (node_name, [ node ], g)
-  | Var id ->
+  | Ident id ->
       let node_name, g = gen_node g in
-      let node =
-        node_name ^ " [label=\"{Ident|{" ^ expr.ty.name ^ "|" ^ id ^ "}}\"]"
-      in
+      let node = node_name ^ " [label=\"{Ident|" ^ id ^ "}\"]" in
       (node_name, [ node ], g)
   | ArrayInit expr ->
       let node_name, g = gen_node g in
@@ -87,8 +100,7 @@ let rec expr_to_dot expr g =
       in
       let node_name, g = gen_node g in
       let node =
-        node_name ^ " [label=\"{BinOp|{" ^ op_dot ^ "|" ^ expr.ty.name
-        ^ "|<lhs>|<rhs>}}\"]"
+        node_name ^ " [label=\"{BinOp|{" ^ op_dot ^ "|<lhs>|<rhs>}}\"]"
       in
       let l_node_name, l_graph, g = expr_to_dot lhs g in
       let r_node_name, r_graph, g = expr_to_dot rhs g in

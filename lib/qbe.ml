@@ -47,6 +47,10 @@ type inst =
   | Mul of operand * operand * operand
   | Div of operand * operand * operand
   | Rem of operand * operand * operand
+  | Or of operand * operand * operand
+  | And of operand * operand * operand
+  | Shl of operand * operand * operand
+  | Shr of operand * operand * operand
   | Cmp of operand * operand * operand * cmp_type * ty
   | Copy of operand * operand
   | Call of call
@@ -105,7 +109,7 @@ and show_op_rv op =
   kind ^ " =" ^ ty
 
 and show_call (c : call) =
-  let ret = match c.ret with None -> "" | Some ret -> show_op_rv ret
+  let ret = match c.ret with None -> "" | Some ret -> show_op_rv ret ^ " "
   and args = List.map show_operand c.args in
   ret ^ "call " ^ "$" ^ c.func ^ "(" ^ String.concat ", " args ^ ")"
 
@@ -124,6 +128,10 @@ and show_inst inst =
   | Mul (rv, lhs, rhs) -> show_tac rv lhs rhs "mul"
   | Div (rv, lhs, rhs) -> show_tac rv lhs rhs "div"
   | Rem (rv, lhs, rhs) -> show_tac rv lhs rhs "rem"
+  | Or (rv, lhs, rhs) -> show_tac rv lhs rhs "or"
+  | And (rv, lhs, rhs) -> show_tac rv lhs rhs "and"
+  | Shl (rv, lhs, rhs) -> show_tac rv lhs rhs "shl"
+  | Shr (rv, lhs, rhs) -> show_tac rv lhs rhs "shr"
   | Cmp (rv, lhs, rhs, cty, opty) ->
       let inst = "c" ^ show_cmp_type cty ^ show_ty opty in
       show_tac rv lhs rhs inst

@@ -5,6 +5,30 @@ All notable changes to this project is documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.0] - 2025-10-06
+
+### Added
+
+- `|`, `&`, `<<` and `>>` operations for `or`, `and`, `shift left` and `shift right`.
+- Arrays:
+    - Arrays contain only 64bit integer.
+    - Initialized with `let arr = [<length>]`.
+    - New `array`, second primitive type.
+    - Accessed and written to with `arr[<index>]`, with runtime bounds checking.
+    - New runtime api:
+        - `Array` type.
+        - `array_alloc()`, `array_get()` and `array_set()` which performs direct operations on arrays.
+- Standalone expression:
+    - Expressions can now be statements (preparing for function calls).
+- Turing completness !!
+    - With `rule110.pulse` in the examples.
+
+### Changed
+
+- Ast terminologies:
+    - `Parsetree` becomes `Astree`, because it actualy is an AST and not a CST.
+    - The `--dump-parsetree` flag becomes `--dump-astree`.
+
 ## [v0.2.0] - 2025-10-03
 
 ### Added
