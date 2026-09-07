@@ -7,15 +7,7 @@ let () =
     Result.fold
       ~ok:(fun (tree, _) ->
         let ir = Pulse.Ir.flatten tree in
-        let asm = Pulse.Codegen.codegen ir in
-        let str_code =
-          List.map Pulse.Codegen.string_of_instruction asm |> String.concat "\n"
-        in
-        let program =
-          String.cat
-            (String.cat Pulse.Codegen.prologue str_code)
-            Pulse.Codegen.epilogue
-        in
+        let program = Pulse.Codegen.codegen ir in
         Out_channel.with_open_text "main.pulse.asm" (fun c ->
             Out_channel.output_string c program);
         Sys.command
