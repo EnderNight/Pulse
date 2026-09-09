@@ -61,8 +61,6 @@ _start:
 |}
 
 and epilogue = {| 
-  call dump
-  
   mov rax, 60
   mov rdi, 0
   syscall
@@ -82,16 +80,42 @@ type instruction =
   | Mov of value * value
   | Add of value * value
   | Sub of value * value
+  | Call of string
 
 let is_vreg (v : value) : bool = match v with VReg _ -> true | _ -> false
 
-let rec inst_selection (ir : Ir.instruction list) : instruction list =
-  let value_of_ir (v : Ir.value) : value =
-    match v with Var v -> VReg v | Integer i -> Imm i
+let rec string_of_instruction (i : instruction) : string =
+  let string_of_register (r : register) : string =
+    match r with
+    | Rax -> "rax"
+    | Rcx -> "rcx"
+    | Rdx -> "rdx"
+    | Rsi -> "rsi"
+    | Rdi -> "rdi"
   in
+  let string_of_value (v : value) : string =
+    match v with
+    | Reg r -> string_of_register r
+    | VReg v -> v
+    | Memory m -> m
+    | Imm i -> Int64.to_string i
+  in
+  match i with
+  | Mov (v1, v2) ->
+      Printf.sprintf "mov %s, %s" (string_of_value v1) (string_of_value v2)
+  | Add (v1, v2) ->
+      Printf.sprintf "add %s, %s" (string_of_value v1) (string_of_value v2)
+  | Sub (v1, v2) ->
+      Printf.sprintf "sub %s, %s" (string_of_value v1) (string_of_value v2)
+  | Call l -> Printf.sprintf "call %s" l
+
+and value_of_ir (v : Ir.value) : value =
+  match v with Var v -> VReg v | Integer i -> Imm i
+
+and inst_selection (ir : Ir.instruction list) : instruction list =
   let inst_of_ir (i : Ir.instruction) : instruction list =
     match i with
-    | Copy (var, v) -> [ Mov (VReg var, value_of_ir v) ]
+    | Print v -> [ Mov (Reg Rdi, value_of_ir v); Call "dump" ]
     | Add (var, l, r) ->
         let var = VReg var in
         [ Mov (var, value_of_ir r); Add (var, value_of_ir l) ]
@@ -148,7 +172,8 @@ and regalloc (ir : instruction list) : instruction list * int =
                 [ Sub (v1_alloc, Reg Rax); Mov (Reg Rax, v2_alloc) ]
               else [ Sub (v1_alloc, v2_alloc) ]
             in
-            aux tl (List.append insts acc) stack_acc v_map)
+            aux tl (List.append insts acc) stack_acc v_map
+        | Call l -> aux tl (i :: acc) stack_acc v_map)
   in
   aux ir [] 0 StringMap.empty
 
@@ -162,31 +187,4 @@ and codegen (ir : Ir.instruction list) : string =
     Printf.sprintf "sub rsp, %d\n" stack_size |> String.cat prologue
   in
   let body = List.map string_of_instruction insts |> String.concat "\n" in
-  let epilogue =
-    String.cat (Printf.sprintf "mov  rdi, [rbp-%d]\n" raw_stack_size) epilogue
-  in
   Printf.sprintf "%s\n%s\n%s\n" prologue body epilogue
-
-and string_of_instruction (i : instruction) : string =
-  let string_of_register (r : register) : string =
-    match r with
-    | Rax -> "rax"
-    | Rcx -> "rcx"
-    | Rdx -> "rdx"
-    | Rsi -> "rsi"
-    | Rdi -> "rdi"
-  in
-  let string_of_value (v : value) : string =
-    match v with
-    | Reg r -> string_of_register r
-    | VReg v -> v
-    | Memory m -> m
-    | Imm i -> Int64.to_string i
-  in
-  match i with
-  | Mov (v1, v2) ->
-      Printf.sprintf "mov   %s, %s" (string_of_value v1) (string_of_value v2)
-  | Add (v1, v2) ->
-      Printf.sprintf "add %s, %s" (string_of_value v1) (string_of_value v2)
-  | Sub (v1, v2) ->
-      Printf.sprintf "sub %s, %s" (string_of_value v1) (string_of_value v2)

@@ -1,5 +1,13 @@
 program =
-  | add_expr EOF
+  | print_stmt* EOF
+  ;
+
+print_stmt =
+  | "print" expr ";"
+  ;
+
+expr =
+  | add_expr
   ;
 
 add_expr =
