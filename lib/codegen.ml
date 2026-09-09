@@ -8,11 +8,11 @@ dump:
   push  rbp
   mov   rbp, rsp
   sub   rsp, 64
-
+  
   ; n:    rbp-10
   ; size: rbp-18
   ; buf:  rbp-50
-
+  
   mov   [rbp-10], rdi
   mov   qword [rbp-18], 0
   mov   byte  [rbp-19], 10
@@ -24,23 +24,23 @@ dump.div:
   mov   rcx, 10
   div   rcx
   mov   [rbp-10], rax
-
+  
   add   rdx, 48
-
+  
   ; buf[rbp-18] = rdx
   mov   rcx, [rbp-18]
   add   rcx, 20
   neg   rcx
   lea   r8, [rbp+rcx]
   mov   [r8], dl
-
+  
   ; size += 1
   inc   qword [rbp-18]
-
+  
   ; n == 0
   cmp   [rbp-10], 0
   jne   dump.div
-
+  
   ; write(fd, *buf, size)
   mov   rdi, 1 ; fd
   mov   rdx, [rbp-18]
@@ -51,7 +51,7 @@ dump.div:
   inc   rdx ; size
   mov   rax, 1
   syscall
-
+  
   leave
   ret
 
@@ -80,11 +80,20 @@ type instruction =
   | Mov of value * value
   | Add of value * value
   | Sub of value * value
+  | Mul of value
+  | Div of value
   | Call of string
 
-let is_vreg (v : value) : bool = match v with VReg _ -> true | _ -> false
+type var_generator = { acc : int }
 
-let rec string_of_instruction (i : instruction) : string =
+let gen_var (g : var_generator) : string * var_generator =
+  let v = Printf.sprintf "r_v%d" g.acc in
+  (v, { acc = g.acc + 1 })
+
+let rec is_vreg (v : value) : bool = match v with VReg _ -> true | _ -> false
+and is_imm (v : value) : bool = match v with Imm _ -> true | _ -> false
+
+and string_of_instruction (i : instruction) : string =
   let string_of_register (r : register) : string =
     match r with
     | Rax -> "rax"
@@ -97,33 +106,84 @@ let rec string_of_instruction (i : instruction) : string =
     match v with
     | Reg r -> string_of_register r
     | VReg v -> v
-    | Memory m -> m
+    | Memory m -> Printf.sprintf "QWORD %s" m
     | Imm i -> Int64.to_string i
   in
   match i with
   | Mov (v1, v2) ->
-      Printf.sprintf "mov %s, %s" (string_of_value v1) (string_of_value v2)
+      Printf.sprintf "  mov %s, %s" (string_of_value v1) (string_of_value v2)
   | Add (v1, v2) ->
-      Printf.sprintf "add %s, %s" (string_of_value v1) (string_of_value v2)
+      Printf.sprintf "  add %s, %s" (string_of_value v1) (string_of_value v2)
   | Sub (v1, v2) ->
-      Printf.sprintf "sub %s, %s" (string_of_value v1) (string_of_value v2)
-  | Call l -> Printf.sprintf "call %s" l
+      Printf.sprintf "  sub %s, %s" (string_of_value v1) (string_of_value v2)
+  | Mul v -> Printf.sprintf "  mul %s" (string_of_value v)
+  | Div v -> Printf.sprintf "  div %s" (string_of_value v)
+  | Call l -> Printf.sprintf "  call %s" l
 
 and value_of_ir (v : Ir.value) : value =
   match v with Var v -> VReg v | Integer i -> Imm i
 
-and inst_selection (ir : Ir.instruction list) : instruction list =
-  let inst_of_ir (i : Ir.instruction) : instruction list =
+and inst_selection (ir : Ir.instruction list) (g : var_generator) :
+    instruction list * var_generator =
+  let inst_of_ir (i : Ir.instruction) (g : var_generator) :
+      instruction list * var_generator =
     match i with
-    | Print v -> [ Mov (Reg Rdi, value_of_ir v); Call "dump" ]
+    | Print v -> ([ Mov (Reg Rdi, value_of_ir v); Call "dump" ], g)
     | Add (var, l, r) ->
         let var = VReg var in
-        [ Mov (var, value_of_ir r); Add (var, value_of_ir l) ]
+        ([ Mov (var, value_of_ir l); Add (var, value_of_ir r) ], g)
     | Sub (var, l, r) ->
         let var = VReg var in
-        [ Mov (var, value_of_ir r); Sub (var, value_of_ir l) ]
+        ([ Mov (var, value_of_ir l); Sub (var, value_of_ir r) ], g)
+    | Mul (var, l, r) ->
+        let var = VReg var in
+        let rvalue = value_of_ir r in
+        let mul_insts =
+          if is_imm rvalue then
+            let rvar, g = gen_var g in
+            let rreg = VReg rvar in
+            [ Mov (rreg, rvalue); Mul rreg ]
+          else [ Mul rvalue ]
+        in
+        ( [ Mov (Reg Rax, value_of_ir l) ] @ mul_insts @ [ Mov (var, Reg Rax) ],
+          g )
+    | Div (var, l, r) ->
+        let var = VReg var in
+        let rvalue = value_of_ir r in
+        let div_insts =
+          if is_imm rvalue then
+            let rvar, g = gen_var g in
+            let rreg = VReg rvar in
+            [ Mov (rreg, rvalue); Div rreg ]
+          else [ Div rvalue ]
+        in
+        ( [ Mov (Reg Rax, value_of_ir l); Mov (Reg Rdx, Imm 0L) ]
+          @ div_insts
+          @ [ Mov (var, Reg Rax) ],
+          g )
+    | Mod (var, l, r) ->
+        let var = VReg var in
+        let rvalue = value_of_ir r in
+        let mod_insts =
+          if is_imm rvalue then
+            let rvar, g = gen_var g in
+            let rreg = VReg rvar in
+            [ Mov (rreg, rvalue); Div rreg ]
+          else [ Div rvalue ]
+        in
+        ( [ Mov (Reg Rax, value_of_ir l); Mov (Reg Rdx, Imm 0L) ]
+          @ mod_insts
+          @ [ Mov (var, Reg Rdx) ],
+          g )
   in
-  List.map inst_of_ir ir |> List.concat
+  let rec aux ir g acc =
+    match ir with
+    | [] -> (acc, g)
+    | i :: tl ->
+        let insts, g = inst_of_ir i g in
+        aux tl g (List.append acc insts)
+  in
+  aux ir g []
 
 and regalloc (ir : instruction list) : instruction list * int =
   let vreg_alloc (i : value) (v_map : string StringMap.t) (acc : int) :
@@ -173,18 +233,27 @@ and regalloc (ir : instruction list) : instruction list * int =
               else [ Sub (v1_alloc, v2_alloc) ]
             in
             aux tl (List.append insts acc) stack_acc v_map
+        | Mul v ->
+            let v_alloc, v_map, stack_acc = vreg_alloc v v_map stack_acc in
+            let insts = [ Mul v_alloc ] in
+            aux tl (List.append insts acc) stack_acc v_map
+        | Div v ->
+            let v_alloc, v_map, stack_acc = vreg_alloc v v_map stack_acc in
+            let insts = [ Div v_alloc ] in
+            aux tl (List.append insts acc) stack_acc v_map
         | Call l -> aux tl (i :: acc) stack_acc v_map)
   in
   aux ir [] 0 StringMap.empty
 
 and codegen (ir : Ir.instruction list) : string =
-  let insts, raw_stack_size = inst_selection ir |> regalloc in
+  let insts, g = inst_selection ir { acc = 0 } in
+  let insts, raw_stack_size = regalloc insts in
   let stack_size =
     Float.div (Float.of_int raw_stack_size) 16.
     |> Float.round |> Int.of_float |> Int.mul 16
   in
   let prologue =
-    Printf.sprintf "sub rsp, %d\n" stack_size |> String.cat prologue
+    Printf.sprintf "  sub rsp, %d\n" stack_size |> String.cat prologue
   in
   let body = List.map string_of_instruction insts |> String.concat "\n" in
   Printf.sprintf "%s\n%s\n%s\n" prologue body epilogue

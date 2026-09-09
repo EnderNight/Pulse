@@ -7,6 +7,9 @@ type typ =
   (* Operators *)
   | Plus
   | Minus
+  | Mul
+  | Div
+  | Mod
   (* Ponctuators *)
   | SemiColon
   (* Misc *)
@@ -21,6 +24,9 @@ and equal (t1 : typ) (t2 : typ) : bool =
   | Print, Print -> true
   | Plus, Plus -> true
   | Minus, Minus -> true
+  | Mul, Mul -> true
+  | Div, Div -> true
+  | Mod, Mod -> true
   | SemiColon, SemiColon -> true
   | EOF, EOF -> true
   | _ -> false
@@ -30,6 +36,6 @@ and string_of_typ t =
   | Integer i -> i
   | Ident i -> i
   | Print -> "print"
-  | Plus | Minus -> "operator"
+  | Plus | Minus | Mul | Div | Mod -> "operator"
   | SemiColon -> ";"
   | EOF -> "end of file"

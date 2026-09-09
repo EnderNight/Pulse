@@ -11,7 +11,11 @@ expr =
   ;
 
 add_expr =
-  | prim_expr ( ( "+" | "-" ) prim_expr )*
+  | mul_expr ( ( "+" | "-" ) mul_expr )*
+  ;
+
+mul_expr =
+  | prim_expr ( ( "*" | "/" | "%" ) prim_expr )*
   ;
 
 prim_expr =

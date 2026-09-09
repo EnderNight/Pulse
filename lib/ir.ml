@@ -4,6 +4,9 @@ type instruction =
   | Print of value
   | Add of string * value * value
   | Sub of string * value * value
+  | Mul of string * value * value
+  | Div of string * value * value
+  | Mod of string * value * value
 
 type var_generator = { acc : int }
 
@@ -24,7 +27,13 @@ let rec flatten_expr (expr : Ast.expr) (g : var_generator) :
       | Plus ->
           (Var v, List.append (List.append lhs rhs) [ Add (v, vlhs, vrhs) ], g)
       | Minus ->
-          (Var v, List.append (List.append lhs rhs) [ Sub (v, vlhs, vrhs) ], g))
+          (Var v, List.append (List.append lhs rhs) [ Sub (v, vlhs, vrhs) ], g)
+      | Mul ->
+          (Var v, List.append (List.append lhs rhs) [ Mul (v, vlhs, vrhs) ], g)
+      | Div ->
+          (Var v, List.append (List.append lhs rhs) [ Div (v, vlhs, vrhs) ], g)
+      | Mod ->
+          (Var v, List.append (List.append lhs rhs) [ Mod (v, vlhs, vrhs) ], g))
 
 and flatten_stmt (stmt : Ast.stmt) (g : var_generator) :
     instruction list * var_generator =
